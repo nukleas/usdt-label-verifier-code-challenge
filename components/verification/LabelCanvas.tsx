@@ -41,6 +41,7 @@ export default function LabelCanvas({
 }: LabelCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -49,9 +50,13 @@ export default function LabelCanvas({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // Create a new image URL for this render
+    const newImageUrl = URL.createObjectURL(imageFile);
+    setImageUrl(newImageUrl);
+
     // Load image from file
     const img = new Image();
-    const imageUrl = URL.createObjectURL(imageFile);
+    img.crossOrigin = "anonymous"; // Allow cross-origin images
 
     img.onload = () => {
       // Set canvas size to match image
@@ -92,21 +97,28 @@ export default function LabelCanvas({
       }
 
       setImageLoaded(true);
-      URL.revokeObjectURL(imageUrl); // Clean up
+      // Don't revoke URL immediately - let it stay for canvas rendering
     };
 
     img.onerror = () => {
       console.error("Failed to load image for canvas");
-      URL.revokeObjectURL(imageUrl);
+      setImageLoaded(false);
     };
 
-    img.src = imageUrl;
+    img.src = newImageUrl;
 
-    // Cleanup
-    return () => {
-      URL.revokeObjectURL(imageUrl);
-    };
+    // Cleanup function (empty for now, as cleanup is handled by separate useEffect)
+    return () => {};
   }, [imageFile, fieldVerifications]);
+
+  // Cleanup image URL when component unmounts or imageFile changes
+  useEffect(() => {
+    return () => {
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+      }
+    };
+  }, [imageFile]); // Only cleanup when imageFile changes
 
   // Get fields that have bboxes
   const fieldsWithBboxes = fieldVerifications.filter(
