@@ -1,103 +1,210 @@
-import Image from "next/image";
+import {
+  Button,
+  Grid,
+  GridContainer,
+  Header,
+  Footer,
+  FooterNav,
+  Link,
+  Banner,
+} from "@trussworks/react-uswds";
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <>
+      <a className="usa-skipnav" href="#main-content">
+        Skip to main content
+      </a>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      <Banner>
+        <div className="usa-accordion">
+          <header className="usa-banner__header">
+            <div className="usa-banner__inner">
+              <div className="grid-col-auto">
+                <img
+                  className="usa-banner__header-flag"
+                  src="/img/us_flag_small.png"
+                  alt="U.S. flag"
+                />
+              </div>
+              <div className="grid-col-fill tablet:grid-col-auto">
+                <p className="usa-banner__header-text">
+                  TTB Label Verification System
+                </p>
+                <p className="usa-banner__header-action" aria-hidden="true">
+                  Demo Application
+                </p>
+              </div>
+              <button
+                className="usa-accordion__button usa-banner__button"
+                aria-expanded="false"
+                aria-controls="gov-banner"
+              >
+                <span className="usa-banner__button-text">About this demo</span>
+              </button>
+            </div>
+          </header>
+          <div
+            className="usa-banner__content usa-accordion__content"
+            id="gov-banner"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <div className="grid-row grid-gap-lg">
+              <div className="usa-banner__guidance tablet:grid-col-6">
+                <img
+                  className="usa-banner__icon usa-media-block__img"
+                  src="/img/icon-dot-gov.svg"
+                  role="img"
+                  alt=""
+                  aria-hidden="true"
+                />
+                <div className="usa-media-block__body">
+                  <p>
+                    <strong>This is a demo application.</strong>
+                    <br />
+                    This application simulates the TTB label verification
+                    process for educational and testing purposes.
+                  </p>
+                </div>
+              </div>
+              <div className="usa-banner__guidance tablet:grid-col-6">
+                <img
+                  className="usa-banner__icon usa-media-block__img"
+                  src="/img/icon-https.svg"
+                  role="img"
+                  alt=""
+                  aria-hidden="true"
+                />
+                <div className="usa-media-block__body">
+                  <p>
+                    <strong>Built with USWDS.</strong>
+                    <br />
+                    This application uses the U.S. Web Design System to ensure
+                    accessibility and consistency with government design
+                    standards.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </Banner>
+
+      <Header basic>
+        <div className="usa-nav-container">
+          <div className="usa-navbar">
+            <div className="usa-logo" id="basic-logo">
+              <em className="usa-logo__text">
+                <Link
+                  href="/"
+                  title="Home"
+                  aria-label="TTB Label Verification home"
+                >
+                  TTB Label Verification
+                </Link>
+              </em>
+            </div>
+            <button type="button" className="usa-menu-btn">
+              Menu
+            </button>
+          </div>
+          <nav role="navigation" className="usa-nav">
+            <ul className="usa-nav__primary usa-accordion">
+              <li className="usa-nav__primary-item">
+                <a className="usa-nav__link" href="#">
+                  <span>Home</span>
+                </a>
+              </li>
+              <li className="usa-nav__primary-item">
+                <a className="usa-nav__link" href="#">
+                  <span>About</span>
+                </a>
+              </li>
+              <li className="usa-nav__primary-item">
+                <a className="usa-nav__link" href="#">
+                  <span>Contact</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </Header>
+
+      <main id="main-content">
+        <section className="usa-hero">
+          <GridContainer>
+            <div className="usa-hero__callout">
+              <h1 className="usa-hero__heading">
+                <span className="usa-hero__heading--alt">
+                  TTB Label Verification:
+                </span>{" "}
+                AI-Powered Alcohol Label Compliance
+              </h1>
+              <p className="usa-hero__text">
+                Verify alcohol labels using advanced AI technology to ensure
+                compliance with TTB (Alcohol and Tobacco Tax and Trade Bureau)
+                regulations.
+              </p>
+              <Link href="/verify">
+                <Button type="button" size="big">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+          </GridContainer>
+        </section>
+
+        <section className="usa-section">
+          <GridContainer>
+            <Grid row gap>
+              <Grid tablet={{ col: 6 }}>
+                <h2>How it works</h2>
+                <ol className="usa-list">
+                  <li>Upload an image of an alcohol label</li>
+                  <li>Our AI analyzes the label for TTB compliance</li>
+                  <li>
+                    Receive detailed verification results and recommendations
+                  </li>
+                </ol>
+              </Grid>
+              <Grid tablet={{ col: 6 }}>
+                <h2>Features</h2>
+                <ul className="usa-list">
+                  <li>OCR text extraction from label images</li>
+                  <li>TTB regulatory compliance checking</li>
+                  <li>Batch processing capabilities</li>
+                  <li>Detailed compliance reports</li>
+                </ul>
+              </Grid>
+            </Grid>
+          </GridContainer>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+      <Footer
+        size="slim"
+        primary={
+          <FooterNav
+            links={[
+              <Link href="https://nextjs.org/learn" key="learn">
+                Learn
+              </Link>,
+              <Link href="https://vercel.com/templates" key="examples">
+                Examples
+              </Link>,
+              <Link href="https://nextjs.org" key="nextjs">
+                Next.js →
+              </Link>,
+            ]}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        }
+        secondary={
+          <div className="usa-footer__contact-info">
+            <p className="usa-footer__contact-heading">
+              TTB Label Verification - Alcohol and Tobacco Tax and Trade Bureau
+            </p>
+          </div>
+        }
+      />
+    </>
   );
 }
