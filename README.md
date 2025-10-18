@@ -15,14 +15,24 @@ This application simulates a simplified version of the **Alcohol and Tobacco Tax
 
 ## Features
 
+### Core Features (Required)
 ✅ **Form Input:** USWDS-compliant form for entering label information
 ✅ **Image Upload:** Drag-and-drop or file selection with preview
 ✅ **OCR Processing:** Tesseract.js for server-side text extraction
 ✅ **Smart Matching:** Fuzzy matching algorithms with configurable thresholds
 ✅ **Detailed Results:** Field-by-field verification with confidence scores
-✅ **Government Warning Detection:** Bonus feature to check TTB-required warning text
-✅ **Accessible Design:** WCAG 2.1 AA compliant using USWDS
-✅ **Responsive Layout:** Mobile-first design that works on all devices
+✅ **Government Warning Detection:** Checks TTB-required warning text
+✅ **Error Handling:** Graceful handling of unreadable images, missing fields
+
+### Bonus Features (Extras)
+🌟 **Multi-Rotation OCR:** Automatically tries 0°, 90°, 180°, 270° rotations to detect vertical/sideways text
+🌟 **Bounding Box Highlighting:** Visual canvas overlay showing where each field was detected on the label
+🌟 **Word-Level Analysis:** Enhanced alcohol content matching using word-level confidence scores
+🌟 **Coordinate Transformation:** Transforms bounding boxes from rotated orientations back to original image coordinates
+🌟 **TypeScript:** Full type safety with comprehensive interfaces
+🌟 **Jest Tests:** 76 passing tests covering core matching logic
+🌟 **Accessible Design:** WCAG 2.1 AA compliant using USWDS
+🌟 **Responsive Layout:** Mobile-first design that works on all devices
 
 ## Technology Stack
 
@@ -55,16 +65,22 @@ atf-app/
 │   └── uswds.css           # USWDS styles
 ├── components/
 │   └── verification/
-│       ├── LabelForm.tsx
-│       ├── ImageUpload.tsx
-│       ├── VerificationResults.tsx
-│       ├── FieldVerification.tsx
-│       └── LoadingState.tsx
+│       ├── LabelForm.tsx           # Form input component
+│       ├── ImageUpload.tsx         # Image upload with preview
+│       ├── VerificationResults.tsx # Results display
+│       ├── FieldVerification.tsx   # Individual field status
+│       ├── LoadingState.tsx        # Progress indicator
+│       └── LabelCanvas.tsx         # Bounding box visualization (bonus)
 ├── lib/
-│   ├── ocr.ts              # Tesseract wrapper
-│   ├── textMatching.ts     # Matching algorithms
+│   ├── ocr.ts              # Tesseract wrapper (main entry)
+│   ├── ocr-core.ts         # Multi-rotation OCR logic (bonus)
+│   ├── textMatching.ts     # Matching algorithms + bbox detection
+│   ├── bboxMatching.ts     # Bounding box utilities (bonus)
 │   ├── validation.ts       # Input validation
-│   └── constants.ts        # TTB requirements
+│   └── constants.ts        # TTB requirements & config
+├── __tests__/              # Jest test suite
+│   ├── lib/                # Unit tests (76 tests)
+│   └── labels/             # Sample test images
 ├── types/
 │   └── verification.ts     # TypeScript definitions
 ├── plan/                   # Technical documentation
@@ -163,12 +179,14 @@ Check the verification results:
 
 ### OCR Processing
 
-The application uses **Tesseract.js** for optical character recognition:
+The application uses **Tesseract.js** with **multi-rotation processing** (bonus feature):
 
 1. User uploads an image
 2. Server receives the image via API
-3. Tesseract processes the image and extracts text
-4. OCR result includes text and confidence score
+3. **Multi-Rotation OCR:** System processes the image at 4 orientations (0°, 90°, 180°, 270°)
+4. Selects the rotation with highest confidence as the primary orientation
+5. Extracts word-level text with bounding box coordinates
+6. Transforms coordinates back to original orientation for visual highlighting
 
 ### Text Matching Algorithms
 
@@ -293,6 +311,23 @@ export const DEFAULT_OCR_CONFIG = {
 };
 ```
 
+## Key Implementation Details
+
+### Bonus Feature: Multi-Rotation OCR
+To handle **vertical or sideways text** (common on labels, especially government warnings):
+- OCR processes image at 4 orientations: 0°, 90°, 180°, 270°
+- Selects rotation with highest word confidence as primary
+- Keeps all rotation results for cross-orientation text detection (e.g., vertical warning on side)
+- Transforms bounding box coordinates from rotated space back to original image orientation
+- Enables detection of text in any orientation on a single label
+
+### Bonus Feature: Bounding Box Visual Highlighting
+- Tesseract provides word-level bounding boxes (x0, y0, x1, y1 coordinates)
+- System traverses Tesseract's tree structure (blocks → paragraphs → lines → words)
+- Matches text patterns and extracts corresponding bounding boxes
+- Merges adjacent boxes for multi-word phrases (e.g., "GOVERNMENT WARNING")
+- Renders highlighted regions on canvas overlay for visual feedback
+
 ## Design Decisions
 
 ### Why Next.js App Router?
@@ -326,29 +361,27 @@ export const DEFAULT_OCR_CONFIG = {
 
 ## Testing
 
-### Manual Testing Checklist
+### Run Tests
 
-- [ ] Form validation works for all fields
-- [ ] Image upload accepts valid files
-- [ ] Image upload rejects invalid files
-- [ ] OCR processes images correctly
-- [ ] Matching logic is accurate
-- [ ] Results display clearly
-- [ ] Error states are handled gracefully
-- [ ] Mobile responsive design works
-- [ ] Accessibility (keyboard navigation)
-- [ ] Loading states display correctly
+```bash
+pnpm test        # Run all tests
+pnpm test:watch  # Watch mode
+pnpm test:coverage # Coverage report
+```
 
-### Test Scenarios
+**Test Suite:** 76 passing tests covering:
+- Text matching algorithms (exact, fuzzy, pattern-based)
+- Bounding box detection and merging
+- Form validation
+- OCR integration with multi-rotation
+- Component rendering
 
-1. **Perfect Match:** All fields match exactly
-2. **Partial Mismatch:** 1-2 fields don't match
-3. **Complete Mismatch:** All fields incorrect
-4. **Missing Fields:** Some info not on label
-5. **Poor Image Quality:** Blurry/low-res image
-6. **Wrong File Type:** Upload non-image file
-7. **Empty Form:** Submit without data
-8. **Large Image:** Test file size limit
+### Test Label Images
+
+Sample test images are included in `__tests__/labels/`:
+1. **ABC Distillery Straight Rye Whisky** - Front/back label with government warning
+2. **12345 Imports Rum with Coconut Liqueur** - Import label test case
+3. **Orpheus Brewing Pineapple Sour Ale** - Beer label with vertical text (tests rotation detection)
 
 ## Deployment
 
@@ -392,23 +425,21 @@ The app can also be deployed to:
 - No user authentication required
 
 ### Known Limitations
-- OCR accuracy depends on image quality
-- Cannot process heavily distorted or rotated labels
-- Does not handle multiple languages
+- OCR accuracy depends on image quality (tested with clear, well-lit labels)
+- Does not handle multiple languages (English only)
 - No batch processing (one label at a time)
-- No verification history saved
+- No verification history saved (stateless)
 - Maximum image size: 5 MB
 
-### Future Enhancements
-- [ ] Image preprocessing (contrast, rotation correction)
-- [ ] Support for multiple product types (Beer, Wine, Spirits)
-- [ ] Image highlighting showing where text was found
+### Future Enhancements (If More Time)
+- [ ] Image preprocessing (contrast enhancement, de-skewing)
+- [ ] Support for multiple product types with conditional field validation (Beer, Wine, Spirits)
+- [ ] Exact government warning text validation (currently checks key phrases only)
+- [ ] Field of vision validation (verify Brand, ABV, Type appear on same side)
 - [ ] Batch processing multiple labels
-- [ ] Export results as PDF
+- [ ] Export results as PDF report
 - [ ] User accounts and verification history
-- [ ] Integration with TTB databases
-- [ ] Mobile app (React Native)
-- [ ] Multi-language support
+- [ ] Integration with real TTB databases
 
 ## Contributing
 

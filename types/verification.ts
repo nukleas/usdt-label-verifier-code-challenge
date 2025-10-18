@@ -357,6 +357,9 @@ export interface LabelFormProps {
 
   /** Initial form values */
   initialValues?: Partial<LabelFormData>;
+
+  /** Callback when form is reset */
+  onReset?: () => void;
 }
 
 /**

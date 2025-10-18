@@ -20,7 +20,7 @@ describe("OCR Processing", () => {
       // Read the test image
       const imagePath = join(
         process.cwd(),
-        "test/labels/orpheus_seal_main.jpg"
+        "__tests__/labels/orpheus_seal_main.jpg"
       );
       const imageBuffer = readFileSync(imagePath);
 
@@ -90,7 +90,7 @@ describe("OCR Processing", () => {
     it("should return rotation metadata", async () => {
       const imagePath = join(
         process.cwd(),
-        "test/labels/orpheus_seal_main.jpg"
+        "__tests__/labels/orpheus_seal_main.jpg"
       );
       const imageBuffer = readFileSync(imagePath);
 
@@ -108,7 +108,7 @@ describe("OCR Processing", () => {
     it("should extract word-level data with bounding boxes", async () => {
       const imagePath = join(
         process.cwd(),
-        "test/labels/orpheus_seal_main.jpg"
+        "__tests__/labels/orpheus_seal_main.jpg"
       );
       const imageBuffer = readFileSync(imagePath);
 
@@ -143,7 +143,7 @@ describe("OCR Processing", () => {
     it("should process image without rotation", async () => {
       const imagePath = join(
         process.cwd(),
-        "test/labels/orpheus_seal_main.jpg"
+        "__tests__/labels/orpheus_seal_main.jpg"
       );
       const imageBuffer = readFileSync(imagePath);
 

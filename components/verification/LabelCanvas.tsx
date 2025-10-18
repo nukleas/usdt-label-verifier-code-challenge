@@ -41,7 +41,6 @@ export default function LabelCanvas({
 }: LabelCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -63,8 +62,6 @@ export default function LabelCanvas({
 
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
-
-      setImageDimensions({ width: img.width, height: img.height });
 
       // Draw image on canvas
       ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);

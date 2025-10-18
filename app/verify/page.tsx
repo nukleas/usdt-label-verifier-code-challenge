@@ -138,7 +138,11 @@ export default function VerifyPage() {
           <Grid row gap>
             {/* Left Column - Form (Always Visible) */}
             <Grid tablet={{ col: 12 }} desktop={{ col: 6 }}>
-              <LabelForm onSubmit={handleSubmit} loading={loading} />
+              <LabelForm
+                onSubmit={handleSubmit}
+                loading={loading}
+                onReset={handleReset}
+              />
             </Grid>
 
             {/* Right Column - Instructions / Loading / Results */}
@@ -158,8 +162,8 @@ export default function VerifyPage() {
                       of your alcohol label (JPEG, PNG, or WebP format).
                     </li>
                     <li>
-                      <strong>Verify:</strong> Click &ldquo;Verify Label&rdquo; to process
-                      your submission.
+                      <strong>Verify:</strong> Click &ldquo;Verify Label&rdquo;
+                      to process your submission.
                     </li>
                     <li>
                       <strong>Review Results:</strong> Check if your label

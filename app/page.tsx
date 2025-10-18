@@ -8,6 +8,7 @@ import {
   Link,
   Banner,
 } from "@trussworks/react-uswds";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -21,10 +22,12 @@ export default function Home() {
           <header className="usa-banner__header">
             <div className="usa-banner__inner">
               <div className="grid-col-auto">
-                <img
+                <Image
                   className="usa-banner__header-flag"
                   src="/img/us_flag_small.png"
                   alt="U.S. flag"
+                  width={16}
+                  height={11}
                 />
               </div>
               <div className="grid-col-fill tablet:grid-col-auto">
@@ -50,12 +53,14 @@ export default function Home() {
           >
             <div className="grid-row grid-gap-lg">
               <div className="usa-banner__guidance tablet:grid-col-6">
-                <img
+                <Image
                   className="usa-banner__icon usa-media-block__img"
                   src="/img/icon-dot-gov.svg"
                   role="img"
                   alt=""
                   aria-hidden="true"
+                  width={24}
+                  height={24}
                 />
                 <div className="usa-media-block__body">
                   <p>
@@ -67,12 +72,14 @@ export default function Home() {
                 </div>
               </div>
               <div className="usa-banner__guidance tablet:grid-col-6">
-                <img
+                <Image
                   className="usa-banner__icon usa-media-block__img"
                   src="/img/icon-https.svg"
                   role="img"
                   alt=""
                   aria-hidden="true"
+                  width={24}
+                  height={24}
                 />
                 <div className="usa-media-block__body">
                   <p>

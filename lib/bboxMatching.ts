@@ -166,7 +166,8 @@ export function findMatchingBBoxes(
         const lineText = normalizeText(line.text);
         if (lineText === normalizedSearch) {
           // Perfect match - highest score
-          const size = (line.bbox.x1 - line.bbox.x0) * (line.bbox.y1 - line.bbox.y0);
+          const size =
+            (line.bbox.x1 - line.bbox.x0) * (line.bbox.y1 - line.bbox.y0);
           candidates.push({
             bbox: line.bbox,
             score: 100,
@@ -178,7 +179,8 @@ export function findMatchingBBoxes(
 
         // Strategy 2: Partial line match (line contains the full phrase)
         if (lineText.includes(normalizedSearch) && searchWords.length > 1) {
-          const size = (line.bbox.x1 - line.bbox.x0) * (line.bbox.y1 - line.bbox.y0);
+          const size =
+            (line.bbox.x1 - line.bbox.x0) * (line.bbox.y1 - line.bbox.y0);
           candidates.push({
             bbox: line.bbox,
             score: 90,
@@ -201,7 +203,8 @@ export function findMatchingBBoxes(
 
             if (wordText === searchWord) {
               // Exact word match
-              const size = (word.bbox.x1 - word.bbox.x0) * (word.bbox.y1 - word.bbox.y0);
+              const size =
+                (word.bbox.x1 - word.bbox.x0) * (word.bbox.y1 - word.bbox.y0);
               candidates.push({
                 bbox: word.bbox,
                 score: 80,
@@ -209,9 +212,13 @@ export function findMatchingBBoxes(
                 size,
               });
               break;
-            } else if (wordText.includes(searchWord) && searchWord.length >= 5) {
+            } else if (
+              wordText.includes(searchWord) &&
+              searchWord.length >= 5
+            ) {
               // Partial match (only for longer words to avoid false positives)
-              const size = (word.bbox.x1 - word.bbox.x0) * (word.bbox.y1 - word.bbox.y0);
+              const size =
+                (word.bbox.x1 - word.bbox.x0) * (word.bbox.y1 - word.bbox.y0);
               candidates.push({
                 bbox: word.bbox,
                 score: 60,
@@ -245,7 +252,7 @@ export function findMatchingBBoxes(
 
   // Take top results and return just the bboxes
   const results = maxResults ? candidates.slice(0, maxResults) : candidates;
-  return results.map(c => c.bbox);
+  return results.map((c) => c.bbox);
 }
 
 /**
@@ -529,7 +536,7 @@ export function findBBoxesAcrossRotations(
     return [];
   }
 
-  let allBboxes: BoundingBox[] = [];
+  const allBboxes: BoundingBox[] = [];
 
   // Search through each rotation
   for (const rotation of allRotationResults) {
@@ -539,10 +546,15 @@ export function findBBoxesAcrossRotations(
     const bboxes = findMatchingBBoxes(searchText, result, options);
 
     // Transform bboxes back to original (0°) orientation
-    const transformedBboxes = bboxes.map(bbox => {
+    const transformedBboxes = bboxes.map((bbox) => {
       // IMPORTANT: Pass the ORIGINAL image dimensions for correct coordinate transformation
       // The transformation function handles dimension swapping internally based on rotation angle
-      return transformBBoxToOriginalOrientation(bbox, rotation.angle, imageWidth, imageHeight);
+      return transformBBoxToOriginalOrientation(
+        bbox,
+        rotation.angle,
+        imageWidth,
+        imageHeight
+      );
     });
 
     allBboxes.push(...transformedBboxes);

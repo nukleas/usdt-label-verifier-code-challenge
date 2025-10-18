@@ -9,6 +9,7 @@
 
 import React, { useCallback, useState, useEffect } from "react";
 import { Alert } from "@trussworks/react-uswds";
+import Image from "next/image";
 import type { ImageUploadProps } from "@/types/verification";
 import { validateImageFile } from "@/lib/validation";
 import { MAX_IMAGE_SIZE, VALID_IMAGE_TYPES } from "@/lib/constants";
@@ -163,11 +164,18 @@ export default function ImageUpload({
           </div>
 
           <div className="border-2px border-base-lighter padding-2 bg-base-lightest radius-md">
-            <img
+            <Image
               src={preview}
               alt="Label preview"
+              width={800}
+              height={600}
               className="maxw-full height-auto display-block"
-              style={{ maxHeight: "400px", margin: "0 auto" }}
+              style={{
+                maxHeight: "400px",
+                margin: "0 auto",
+                width: "auto",
+                height: "auto",
+              }}
             />
           </div>
         </div>

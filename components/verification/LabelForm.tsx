@@ -22,6 +22,7 @@ export default function LabelForm({
   onSubmit,
   loading = false,
   initialValues,
+  onReset,
 }: LabelFormProps) {
   const [formData, setFormData] = useState<LabelFormData>({
     brandName: initialValues?.brandName || "",
@@ -107,7 +108,12 @@ export default function LabelForm({
     });
     setImage(null);
     setErrors({});
-  }, []);
+
+    // Call parent reset callback to clear imageFile state
+    if (onReset) {
+      onReset();
+    }
+  }, [onReset]);
 
   return (
     <Form onSubmit={handleSubmit} large>
@@ -165,9 +171,7 @@ export default function LabelForm({
         <Label htmlFor="alcoholContent">
           Alcohol Content (ABV) <span className="text-secondary-vivid">*</span>
         </Label>
-        <span className="usa-hint">
-          Enter as percentage (e.g., 45 or 45%)
-        </span>
+        <span className="usa-hint">Enter as percentage (e.g., 45 or 45%)</span>
         {errors.alcoholContent && (
           <span className="usa-error-message" role="alert">
             {errors.alcoholContent}
@@ -187,9 +191,7 @@ export default function LabelForm({
 
       <FormGroup error={!!errors.netContents}>
         <Label htmlFor="netContents">Net Contents (Optional)</Label>
-        <span className="usa-hint">
-          e.g., 750 mL, 12 oz, 1 L
-        </span>
+        <span className="usa-hint">e.g., 750 mL, 12 oz, 1 L</span>
         {errors.netContents && (
           <span className="usa-error-message" role="alert">
             {errors.netContents}

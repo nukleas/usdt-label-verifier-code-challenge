@@ -50,7 +50,7 @@ function transformPrimaryBBoxes(
 
   // Import the transformation function from bboxMatching
   // For now, inline the transformation logic
-  return bboxes.map(bbox => {
+  return bboxes.map((bbox) => {
     const { x0, y0, x1, y1 } = bbox;
 
     switch (rotationDegrees) {
@@ -102,7 +102,11 @@ export function compareFields(
   formData: LabelFormData,
   ocrResult: {
     text: string;
-    blocks?: Array<{ text: string; confidence: number; bbox: { x0: number; y0: number; x1: number; y1: number } }>;
+    blocks?: Array<{
+      text: string;
+      confidence: number;
+      bbox: { x0: number; y0: number; x1: number; y1: number };
+    }>;
     rawTesseractResult?: unknown;
     allRotationResults?: Array<{ angle: number; result: unknown }>;
     imageWidth?: number;
@@ -113,7 +117,9 @@ export function compareFields(
   const fields: FieldVerification[] = [];
   const ocrText = ocrResult.text;
   const blocks = ocrResult.blocks || [];
-  const rawTesseract = ocrResult.rawTesseractResult as TesseractResult | undefined;
+  const rawTesseract = ocrResult.rawTesseractResult as
+    | TesseractResult
+    | undefined;
   const allRotations = ocrResult.allRotationResults;
   const imageWidth = ocrResult.imageWidth ?? 0;
   const imageHeight = ocrResult.imageHeight ?? 0;
@@ -124,16 +130,61 @@ export function compareFields(
     : 0;
 
   // Verify each field (pass blocks and raw result for context-aware matching)
-  fields.push(matchBrandName(formData.brandName, ocrText, rawTesseract, primaryRotationDegrees, imageWidth, imageHeight));
-  fields.push(matchProductType(formData.productType, ocrText, rawTesseract, primaryRotationDegrees, imageWidth, imageHeight));
-  fields.push(matchAlcoholContent(formData.alcoholContent, ocrText, blocks, rawTesseract, primaryRotationDegrees, imageWidth, imageHeight));
+  fields.push(
+    matchBrandName(
+      formData.brandName,
+      ocrText,
+      rawTesseract,
+      primaryRotationDegrees,
+      imageWidth,
+      imageHeight
+    )
+  );
+  fields.push(
+    matchProductType(
+      formData.productType,
+      ocrText,
+      rawTesseract,
+      primaryRotationDegrees,
+      imageWidth,
+      imageHeight
+    )
+  );
+  fields.push(
+    matchAlcoholContent(
+      formData.alcoholContent,
+      ocrText,
+      blocks,
+      rawTesseract,
+      primaryRotationDegrees,
+      imageWidth,
+      imageHeight
+    )
+  );
 
   if (formData.netContents) {
-    fields.push(matchNetContents(formData.netContents, ocrText, rawTesseract, primaryRotationDegrees, imageWidth, imageHeight));
+    fields.push(
+      matchNetContents(
+        formData.netContents,
+        ocrText,
+        rawTesseract,
+        primaryRotationDegrees,
+        imageWidth,
+        imageHeight
+      )
+    );
   }
 
   // Bonus: Check government warning (needs all rotations for vertical text!)
-  fields.push(matchGovernmentWarning(ocrText, rawTesseract, allRotations, imageWidth, imageHeight));
+  fields.push(
+    matchGovernmentWarning(
+      ocrText,
+      rawTesseract,
+      allRotations,
+      imageWidth,
+      imageHeight
+    )
+  );
 
   // Determine overall status
   const overallStatus = determineOverallStatus(fields);
@@ -177,7 +228,12 @@ export function matchBrandName(
   bboxes = deduplicateBBoxes(mergeBBoxes(bboxes, 10));
 
   // Transform bboxes from primary rotation to original orientation
-  bboxes = transformPrimaryBBoxes(bboxes, rotationDegrees, imageWidth, imageHeight);
+  bboxes = transformPrimaryBBoxes(
+    bboxes,
+    rotationDegrees,
+    imageWidth,
+    imageHeight
+  );
 
   // Step 1: Exact match
   if (normalizedOCR.includes(normalizedExpected)) {
@@ -194,7 +250,9 @@ export function matchBrandName(
 
   // Step 2: Fuzzy match
   const similarity = calculateSimilarity(normalizedExpected, normalizedOCR);
-  if (similarity.score >= DEFAULT_MATCHING_CONFIG.brandName.fuzzyMatchThreshold) {
+  if (
+    similarity.score >= DEFAULT_MATCHING_CONFIG.brandName.fuzzyMatchThreshold
+  ) {
     return {
       field: "brandName",
       status: "match",
@@ -212,10 +270,7 @@ export function matchBrandName(
   const wordMatchRate =
     words.length > 0 ? (matchedWords.length / words.length) * 100 : 0;
 
-  if (
-    wordMatchRate >=
-    DEFAULT_MATCHING_CONFIG.brandName.wordMatchThreshold
-  ) {
+  if (wordMatchRate >= DEFAULT_MATCHING_CONFIG.brandName.wordMatchThreshold) {
     return {
       field: "brandName",
       status: "match",
@@ -262,7 +317,12 @@ export function matchProductType(
   bboxes = deduplicateBBoxes(mergeBBoxes(bboxes, 10));
 
   // Transform bboxes from primary rotation to original orientation
-  bboxes = transformPrimaryBBoxes(bboxes, rotationDegrees, imageWidth, imageHeight);
+  bboxes = transformPrimaryBBoxes(
+    bboxes,
+    rotationDegrees,
+    imageWidth,
+    imageHeight
+  );
 
   // Step 1: Exact substring match
   if (normalizedOCR.includes(normalizedExpected)) {
@@ -303,7 +363,12 @@ export function matchProductType(
           })
         : [];
       variationBboxes = deduplicateBBoxes(mergeBBoxes(variationBboxes, 10));
-      variationBboxes = transformPrimaryBBoxes(variationBboxes, rotationDegrees, imageWidth, imageHeight);
+      variationBboxes = transformPrimaryBBoxes(
+        variationBboxes,
+        rotationDegrees,
+        imageWidth,
+        imageHeight
+      );
 
       return {
         field: "productType",
@@ -319,7 +384,9 @@ export function matchProductType(
 
   // Step 4: Fuzzy match
   const similarity = calculateSimilarity(normalizedExpected, normalizedOCR);
-  if (similarity.score >= DEFAULT_MATCHING_CONFIG.productType.fuzzyMatchThreshold) {
+  if (
+    similarity.score >= DEFAULT_MATCHING_CONFIG.productType.fuzzyMatchThreshold
+  ) {
     return {
       field: "productType",
       status: "match",
@@ -346,28 +413,38 @@ export function matchProductType(
  */
 function matchAlcoholContentFromBlocks(
   expectedNum: number,
-  words: Array<{ text: string; confidence: number; bbox: { x0: number; y0: number; x1: number; y1: number } }>,
+  words: Array<{
+    text: string;
+    confidence: number;
+    bbox: { x0: number; y0: number; x1: number; y1: number };
+  }>,
   tolerance: number,
   looseTolerance: number
 ): FieldVerification | null {
   // Find words containing alcohol keywords (case-insensitive)
-  const keywordIndices = words.map((word, idx) => {
-    const text = word.text.toLowerCase();
-    if (
-      text.includes('alc') ||
-      text.includes('vol') ||
-      text.includes('abv') ||
-      text.includes('alcohol')
-    ) {
-      return idx;
-    }
-    return -1;
-  }).filter(idx => idx !== -1);
+  const keywordIndices = words
+    .map((word, idx) => {
+      const text = word.text.toLowerCase();
+      if (
+        text.includes("alc") ||
+        text.includes("vol") ||
+        text.includes("abv") ||
+        text.includes("alcohol")
+      ) {
+        return idx;
+      }
+      return -1;
+    })
+    .filter((idx) => idx !== -1);
 
   if (keywordIndices.length === 0) return null;
 
   // Extract numbers from keyword words and nearby words (within 5 words distance)
-  const candidateNumbers: Array<{ value: number; confidence: number; source: string }> = [];
+  const candidateNumbers: Array<{
+    value: number;
+    confidence: number;
+    source: string;
+  }> = [];
 
   for (const keywordIdx of keywordIndices) {
     const keywordWord = words[keywordIdx];
@@ -389,7 +466,9 @@ function matchAlcoholContentFromBlocks(
           candidateNumbers.push({
             value: num,
             confidence: word.confidence,
-            source: `${num}% ALC/VOL (confidence: ${word.confidence.toFixed(1)}%)`,
+            source: `${num}% ALC/VOL (confidence: ${word.confidence.toFixed(
+              1
+            )}%)`,
           });
         }
       }
@@ -411,12 +490,15 @@ function matchAlcoholContentFromBlocks(
       const percentMatches = text.matchAll(/(\d+(?:\.\d+)?)\s*%/g);
       for (const match of percentMatches) {
         const num = parseFloat(match[1]);
-        if (num >= 0.5 && num <= 20) {  // Stricter range for standalone percentages
+        if (num >= 0.5 && num <= 20) {
+          // Stricter range for standalone percentages
           const distance = Math.abs(i - keywordIdx);
           candidateNumbers.push({
             value: num,
             confidence: word.confidence,
-            source: `${num}% (${distance} words from keyword, confidence: ${word.confidence.toFixed(1)}%)`,
+            source: `${num}% (${distance} words from keyword, confidence: ${word.confidence.toFixed(
+              1
+            )}%)`,
           });
         }
       }
@@ -430,7 +512,9 @@ function matchAlcoholContentFromBlocks(
           candidateNumbers.push({
             value: num,
             confidence: word.confidence,
-            source: `${num} (${distance} words from "${keywordWord.text}", confidence: ${word.confidence.toFixed(1)}%)`,
+            source: `${num} (${distance} words from "${
+              keywordWord.text
+            }", confidence: ${word.confidence.toFixed(1)}%)`,
           });
         }
       }
@@ -490,7 +574,11 @@ function matchAlcoholContentFromBlocks(
 export function matchAlcoholContent(
   expected: string,
   ocrText: string,
-  blocks?: Array<{ text: string; confidence: number; bbox: { x0: number; y0: number; x1: number; y1: number } }>,
+  blocks?: Array<{
+    text: string;
+    confidence: number;
+    bbox: { x0: number; y0: number; x1: number; y1: number };
+  }>,
   rawTesseract?: TesseractResult,
   rotationDegrees: number = 0,
   imageWidth: number = 0,
@@ -501,15 +589,27 @@ export function matchAlcoholContent(
   const looseTolerance = DEFAULT_MATCHING_CONFIG.alcoholContent.looseTolerance;
 
   // Find bboxes using specialized alcohol content matcher
-  let bboxes = rawTesseract ? findAlcoholContentBBoxes(expectedNum, rawTesseract) : [];
+  let bboxes = rawTesseract
+    ? findAlcoholContentBBoxes(expectedNum, rawTesseract)
+    : [];
   bboxes = deduplicateBBoxes(mergeBBoxes(bboxes, 10));
 
   // Transform bboxes from primary rotation to original orientation
-  bboxes = transformPrimaryBBoxes(bboxes, rotationDegrees, imageWidth, imageHeight);
+  bboxes = transformPrimaryBBoxes(
+    bboxes,
+    rotationDegrees,
+    imageWidth,
+    imageHeight
+  );
 
   // If blocks are available, use block-aware matching for better accuracy
   if (blocks && blocks.length > 0) {
-    const blockResult = matchAlcoholContentFromBlocks(expectedNum, blocks, tolerance, looseTolerance);
+    const blockResult = matchAlcoholContentFromBlocks(
+      expectedNum,
+      blocks,
+      tolerance,
+      looseTolerance
+    );
     if (blockResult) {
       // Add bboxes to block result
       return {
@@ -596,7 +696,12 @@ export function matchAlcoholContent(
   }
 
   // Combine all found numbers for loose matching (in priority order)
-  const allMatches = [...alcVolMatches, ...abvMatches, ...proofMatches, ...percentageMatches];
+  const allMatches = [
+    ...alcVolMatches,
+    ...abvMatches,
+    ...proofMatches,
+    ...percentageMatches,
+  ];
 
   // Find exact match in all patterns
   for (const found of allMatches) {
@@ -697,15 +802,22 @@ export function matchNetContents(
   }
 
   // Find bboxes for volume patterns
-  let bboxes: any[] = [];
+  let bboxes: BoundingBox[] = [];
   if (rawTesseract) {
     const mlBboxes = findPatternBBoxes(VOLUME_ML_PATTERN, rawTesseract);
     const ozBboxes = findPatternBBoxes(VOLUME_OZ_PATTERN, rawTesseract);
     const lBboxes = findPatternBBoxes(VOLUME_L_PATTERN, rawTesseract);
-    bboxes = deduplicateBBoxes(mergeBBoxes([...mlBboxes, ...ozBboxes, ...lBboxes], 10));
+    bboxes = deduplicateBBoxes(
+      mergeBBoxes([...mlBboxes, ...ozBboxes, ...lBboxes], 10)
+    );
 
     // Transform bboxes from primary rotation to original orientation
-    bboxes = transformPrimaryBBoxes(bboxes, rotationDegrees, imageWidth, imageHeight);
+    bboxes = transformPrimaryBBoxes(
+      bboxes,
+      rotationDegrees,
+      imageWidth,
+      imageHeight
+    );
   }
 
   const foundVolumes: Array<{ value: number; unit: string }> = [];
@@ -795,7 +907,7 @@ export function matchGovernmentWarning(
   // Find bboxes for government warning keywords
   // For warning text, be more permissive - it's often small and vertical
   // IMPORTANT: Search across ALL rotations since warning text is often vertical!
-  let bboxes: any[] = [];
+  let bboxes: BoundingBox[] = [];
   const warningKeywords = [
     "GOVERNMENT WARNING",
     "WARNING",
@@ -807,7 +919,12 @@ export function matchGovernmentWarning(
   ];
 
   // Try all rotations first (for vertical text detection)
-  if (allRotations && allRotations.length > 0 && imageWidth > 0 && imageHeight > 0) {
+  if (
+    allRotations &&
+    allRotations.length > 0 &&
+    imageWidth > 0 &&
+    imageHeight > 0
+  ) {
     for (const keyword of warningKeywords) {
       const keywordBboxes = findBBoxesAcrossRotations(
         keyword,
@@ -835,9 +952,13 @@ export function matchGovernmentWarning(
 
   bboxes = deduplicateBBoxes(mergeBBoxes(bboxes, 20)); // Larger merge threshold for multi-line warnings
 
-  const matchRate = (foundPhrases.length / WARNING_REQUIRED_PHRASES.length) * 100;
+  const matchRate =
+    (foundPhrases.length / WARNING_REQUIRED_PHRASES.length) * 100;
 
-  if (matchRate >= DEFAULT_MATCHING_CONFIG.governmentWarning.phraseMatchThreshold * 100) {
+  if (
+    matchRate >=
+    DEFAULT_MATCHING_CONFIG.governmentWarning.phraseMatchThreshold * 100
+  ) {
     return {
       field: "governmentWarning",
       status: "match",
@@ -903,10 +1024,14 @@ function extractMatch(ocrText: string, expected: string): string {
 /**
  * Calculates Levenshtein distance and similarity
  */
-export function calculateSimilarity(str1: string, str2: string): SimilarityResult {
+export function calculateSimilarity(
+  str1: string,
+  str2: string
+): SimilarityResult {
   const distance = levenshteinDistance(str1, str2);
   const maxLen = Math.max(str1.length, str2.length);
-  const score = maxLen > 0 ? Math.round(((maxLen - distance) / maxLen) * 100) : 0;
+  const score =
+    maxLen > 0 ? Math.round(((maxLen - distance) / maxLen) * 100) : 0;
 
   return {
     score,
