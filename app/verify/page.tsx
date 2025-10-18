@@ -232,7 +232,7 @@ export default function VerifyPage() {
         secondary={
           <div className="usa-footer__contact-info">
             <p className="usa-footer__contact-heading">
-              TTB Label Verification - AI-Powered Compliance Tool
+              TTB Label Verification - Automated Compliance Tool
             </p>
           </div>
         }

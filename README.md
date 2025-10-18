@@ -1,6 +1,6 @@
 # TTB Label Verification App
 
-AI-Powered Alcohol Label Verification System for TTB Compliance
+Automated Alcohol Label Verification System for TTB Compliance
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
@@ -19,7 +19,7 @@ This application simulates a simplified version of the **Alcohol and Tobacco Tax
 ✅ **Form Input:** USWDS-compliant form for entering label information
 ✅ **Image Upload:** Drag-and-drop or file selection with preview
 ✅ **OCR Processing:** Tesseract.js for server-side text extraction
-✅ **Smart Matching:** Fuzzy matching algorithms with configurable thresholds
+✅ **Fuzzy Matching:** Text comparison algorithms with configurable thresholds
 ✅ **Detailed Results:** Field-by-field verification with confidence scores
 ✅ **Government Warning Detection:** Checks TTB-required warning text
 ✅ **Error Handling:** Graceful handling of unreadable images, missing fields

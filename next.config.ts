@@ -14,6 +14,24 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  // Ensure WASM files are served with correct MIME type
+  async headers() {
+    return [
+      {
+        source: "/tesseract-bundled/:path*",
+        headers: [
+          {
+            key: "Cross-Origin-Embedder-Policy",
+            value: "require-corp",
+          },
+          {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

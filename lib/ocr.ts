@@ -41,31 +41,39 @@ export async function createTesseractWorker() {
   let worker;
 
   try {
-    worker = await createWorker(
-      "eng",
-      1,
-      isNode
-        ? {
-            // Node.js (API routes, Jest tests) - use absolute paths
-            workerPath: isServerless
-              ? undefined // Let Tesseract.js auto-detect in serverless
-              : resolve(
-                  process.cwd(),
-                  "node_modules/tesseract.js/src/worker-script/node/index.js"
-                ),
-            langPath: isServerless
-              ? undefined // Let Tesseract.js auto-detect in serverless
-              : resolve(process.cwd(), "public/tesseract"),
-            gzip: false,
-          }
-        : {
-            // Browser - use public folder paths
-            workerPath: "/tesseract/worker.min.js",
-            corePath: "/tesseract/tesseract-core-lstm.wasm.js",
-            langPath: "/tesseract",
-            gzip: false,
-          }
-    );
+    if (isServerless) {
+      // For serverless environments, use locally bundled files
+      console.log(
+        "Creating Tesseract worker for serverless environment using local bundled files"
+      );
+      worker = await createWorker("eng", 1, {
+        // Use locally bundled Tesseract.js files (no CDN dependency)
+        workerPath: "/tesseract-bundled/worker.min.js",
+        corePath: "/tesseract-bundled/tesseract-core-simd.wasm.js",
+        langPath: "/tesseract-bundled/traineddata",
+        gzip: false,
+      });
+    } else if (isNode) {
+      // Local development and testing
+      console.log("Creating Tesseract worker for local Node.js environment");
+      worker = await createWorker("eng", 1, {
+        workerPath: resolve(
+          process.cwd(),
+          "node_modules/tesseract.js/src/worker-script/node/index.js"
+        ),
+        langPath: resolve(process.cwd(), "public/tesseract"),
+        gzip: false,
+      });
+    } else {
+      // Browser environment
+      console.log("Creating Tesseract worker for browser environment");
+      worker = await createWorker("eng", 1, {
+        workerPath: "/tesseract/worker.min.js",
+        corePath: "/tesseract/tesseract-core-lstm.wasm.js",
+        langPath: "/tesseract",
+        gzip: false,
+      });
+    }
   } catch (error) {
     console.warn(
       "Failed to create worker with custom paths, falling back to default:",
@@ -103,58 +111,76 @@ export async function createTesseractWorker() {
 export async function processOCR(
   imageFile: File | Blob | Buffer
 ): Promise<OCRResult> {
-  try {
-    console.log("Starting multi-rotation OCR processing with Tesseract.js...");
-    console.log("Environment:", {
-      isNode:
-        typeof process !== "undefined" &&
-        process.versions &&
-        process.versions.node,
-      isServerless:
-        typeof process !== "undefined" &&
-        (process.env.VERCEL ||
-          process.env.AWS_LAMBDA_FUNCTION_NAME ||
-          process.env.NETLIFY ||
-          process.env.RAILWAY_ENVIRONMENT ||
-          process.env.NODE_ENV === "production"),
-      nodeEnv: process.env.NODE_ENV,
-    });
+  // Set timeout for OCR processing (4 minutes for serverless, 10 minutes for local)
+  const isServerless =
+    typeof process !== "undefined" &&
+    (process.env.VERCEL ||
+      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      process.env.NETLIFY ||
+      process.env.RAILWAY_ENVIRONMENT ||
+      process.env.NODE_ENV === "production");
 
-    // Convert to buffer for image manipulation
-    const bufferStart = Date.now();
-    let imageBuffer: Buffer;
+  const timeoutMs = isServerless ? 240000 : 600000; // 4 min serverless, 10 min local
 
-    if (Buffer.isBuffer(imageFile)) {
-      // Already a Buffer (Node.js)
-      imageBuffer = imageFile;
-    } else if (typeof (imageFile as Blob).arrayBuffer === "function") {
-      // Browser Blob/File with arrayBuffer method
-      const arrayBuffer = await (imageFile as Blob).arrayBuffer();
-      imageBuffer = Buffer.from(arrayBuffer);
-    } else {
-      throw new Error("Invalid image input: must be File, Blob, or Buffer");
+  return new Promise(async (resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(
+        new Error(`OCR processing timed out after ${timeoutMs / 1000} seconds`)
+      );
+    }, timeoutMs);
+
+    try {
+      console.log(
+        "Starting multi-rotation OCR processing with Tesseract.js..."
+      );
+      console.log("Environment:", {
+        isNode:
+          typeof process !== "undefined" &&
+          process.versions &&
+          process.versions.node,
+        isServerless,
+        nodeEnv: process.env.NODE_ENV,
+        timeoutMs,
+      });
+
+      // Convert to buffer for image manipulation
+      const bufferStart = Date.now();
+      let imageBuffer: Buffer;
+
+      if (Buffer.isBuffer(imageFile)) {
+        // Already a Buffer (Node.js)
+        imageBuffer = imageFile;
+      } else if (typeof (imageFile as Blob).arrayBuffer === "function") {
+        // Browser Blob/File with arrayBuffer method
+        const arrayBuffer = await (imageFile as Blob).arrayBuffer();
+        imageBuffer = Buffer.from(arrayBuffer);
+      } else {
+        throw new Error("Invalid image input: must be File, Blob, or Buffer");
+      }
+      console.log(`Image converted to buffer in ${Date.now() - bufferStart}ms`);
+
+      // Initialize Tesseract worker
+      const workerStart = Date.now();
+      const worker = await createTesseractWorker();
+      console.log(
+        `Tesseract worker initialized in ${Date.now() - workerStart}ms`
+      );
+
+      // Process with OCR core logic
+      const processor = new OCRProcessor();
+      const result = await processor.processWithRotations(worker, imageBuffer);
+
+      // Terminate worker
+      await worker.terminate();
+
+      clearTimeout(timeoutId);
+      resolve(result);
+    } catch (error) {
+      clearTimeout(timeoutId);
+      console.error("OCR processing error:", error);
+      reject(new Error(ERROR_MESSAGES.OCR_FAILED));
     }
-    console.log(`Image converted to buffer in ${Date.now() - bufferStart}ms`);
-
-    // Initialize Tesseract worker
-    const workerStart = Date.now();
-    const worker = await createTesseractWorker();
-    console.log(
-      `Tesseract worker initialized in ${Date.now() - workerStart}ms`
-    );
-
-    // Process with OCR core logic
-    const processor = new OCRProcessor();
-    const result = await processor.processWithRotations(worker, imageBuffer);
-
-    // Terminate worker
-    await worker.terminate();
-
-    return result;
-  } catch (error) {
-    console.error("OCR processing error:", error);
-    throw new Error(ERROR_MESSAGES.OCR_FAILED);
-  }
+  });
 }
 
 /**

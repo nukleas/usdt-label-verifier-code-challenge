@@ -144,10 +144,10 @@ export default function Home() {
                 <span className="usa-hero__heading--alt">
                   TTB Label Verification:
                 </span>{" "}
-                AI-Powered Alcohol Label Compliance
+                Automated Alcohol Label Compliance
               </h1>
               <p className="usa-hero__text">
-                Verify alcohol labels using advanced AI technology to ensure
+                Verify alcohol labels using OCR and text matching algorithms to ensure
                 compliance with TTB (Alcohol and Tobacco Tax and Trade Bureau)
                 regulations.
               </p>
@@ -167,9 +167,9 @@ export default function Home() {
                 <h2>How it works</h2>
                 <ol className="usa-list">
                   <li>Upload an image of an alcohol label</li>
-                  <li>Our AI analyzes the label for TTB compliance</li>
+                  <li>OCR extracts text and verifies TTB compliance</li>
                   <li>
-                    Receive detailed verification results and recommendations
+                    Receive detailed verification results
                   </li>
                 </ol>
               </Grid>
@@ -178,8 +178,8 @@ export default function Home() {
                 <ul className="usa-list">
                   <li>OCR text extraction from label images</li>
                   <li>TTB regulatory compliance checking</li>
-                  <li>Batch processing capabilities</li>
-                  <li>Detailed compliance reports</li>
+                  <li>Government warning detection</li>
+                  <li>Visual bounding box highlighting</li>
                 </ul>
               </Grid>
             </Grid>

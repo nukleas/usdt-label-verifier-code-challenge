@@ -11,6 +11,9 @@ import type { OCRResult, TextBlock } from "@/types/verification";
 // Rotation angles to try (covers all 4 orientations)
 const ROTATION_ANGLES = [0, 90, 180, 270] as const;
 
+// Reduced rotations for serverless environments to improve performance
+const SERVERLESS_ROTATION_ANGLES = [0, 90] as const;
+
 // Minimum confidence threshold for including words (0-100)
 const MIN_WORD_CONFIDENCE = 60;
 
@@ -40,9 +43,20 @@ export class OCRProcessor {
   ): Promise<OCRResult> {
     const pipelineStart = Date.now();
 
-    console.log("Starting multi-rotation OCR processing...");
+    // Detect serverless environment for optimized processing
+    const isServerless = typeof process !== "undefined" && (
+      process.env.VERCEL ||
+      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      process.env.NETLIFY ||
+      process.env.RAILWAY_ENVIRONMENT ||
+      process.env.NODE_ENV === "production"
+    );
 
-    // Run OCR at all 4 rotations
+    const rotationAngles = isServerless ? SERVERLESS_ROTATION_ANGLES : ROTATION_ANGLES;
+    
+    console.log(`Starting multi-rotation OCR processing... (${rotationAngles.length} rotations)`);
+
+    // Run OCR at selected rotations
     const attempts: RotationAttempt[] = [];
     const jimpModule = await import("jimp");
     const Jimp = jimpModule.default;
@@ -51,7 +65,7 @@ export class OCRProcessor {
     const imageWidth = baseImage.bitmap.width;
     const imageHeight = baseImage.bitmap.height;
 
-    for (const angle of ROTATION_ANGLES) {
+    for (const angle of rotationAngles) {
       const attemptStart = Date.now();
 
       // Rotate image if needed
@@ -128,7 +142,7 @@ export class OCRProcessor {
       blocks: allBlocks,
       rotationAppliedRadians: this.degToRad(primaryAttempt.angle),
       rotationStrategy: "auto",
-      rotationCandidatesDegrees: Array.from(ROTATION_ANGLES),
+      rotationCandidatesDegrees: Array.from(rotationAngles),
       rawTesseractResult: primaryAttempt.rawResult, // Primary result for compatibility
       allRotationResults: allRawResults, // All results for multi-orientation bbox matching
       imageWidth, // Original image dimensions for bbox transformation
