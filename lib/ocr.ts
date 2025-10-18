@@ -27,28 +27,53 @@ import { OCRProcessor } from "./ocr-core";
 export async function createTesseractWorker() {
   // Detect if running in Node.js (API routes, tests) vs browser
   const isNode =
-    typeof process !== "undefined" &&
-    process.versions &&
-    process.versions.node;
+    typeof process !== "undefined" && process.versions && process.versions.node;
 
-  const worker = await createWorker(
-    "eng",
-    1,
-    isNode
-      ? {
-          // Node.js (API routes, Jest tests) - use absolute paths
-          workerPath: resolve(process.cwd(), "node_modules/tesseract.js/src/worker-script/node/index.js"),
-          langPath: resolve(process.cwd(), "public/tesseract"),
-          gzip: false,
-        }
-      : {
-          // Browser - use public folder paths
-          workerPath: "/tesseract/worker.min.js",
-          corePath: "/tesseract/tesseract-core-lstm.wasm.js",
-          langPath: "/tesseract",
-          gzip: false,
-        }
-  );
+  // Detect if running in serverless environment (Vercel, AWS Lambda, etc.)
+  const isServerless =
+    isNode &&
+    (process.env.VERCEL ||
+      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      process.env.NETLIFY ||
+      process.env.RAILWAY_ENVIRONMENT ||
+      process.env.NODE_ENV === "production");
+
+  let worker;
+
+  try {
+    worker = await createWorker(
+      "eng",
+      1,
+      isNode
+        ? {
+            // Node.js (API routes, Jest tests) - use absolute paths
+            workerPath: isServerless
+              ? undefined // Let Tesseract.js auto-detect in serverless
+              : resolve(
+                  process.cwd(),
+                  "node_modules/tesseract.js/src/worker-script/node/index.js"
+                ),
+            langPath: isServerless
+              ? undefined // Let Tesseract.js auto-detect in serverless
+              : resolve(process.cwd(), "public/tesseract"),
+            gzip: false,
+          }
+        : {
+            // Browser - use public folder paths
+            workerPath: "/tesseract/worker.min.js",
+            corePath: "/tesseract/tesseract-core-lstm.wasm.js",
+            langPath: "/tesseract",
+            gzip: false,
+          }
+    );
+  } catch (error) {
+    console.warn(
+      "Failed to create worker with custom paths, falling back to default:",
+      error
+    );
+    // Fallback: let Tesseract.js handle everything automatically
+    worker = await createWorker("eng", 1);
+  }
 
   // Configure Tesseract for better accuracy on alcohol labels
   await worker.setParameters({
@@ -80,6 +105,20 @@ export async function processOCR(
 ): Promise<OCRResult> {
   try {
     console.log("Starting multi-rotation OCR processing with Tesseract.js...");
+    console.log("Environment:", {
+      isNode:
+        typeof process !== "undefined" &&
+        process.versions &&
+        process.versions.node,
+      isServerless:
+        typeof process !== "undefined" &&
+        (process.env.VERCEL ||
+          process.env.AWS_LAMBDA_FUNCTION_NAME ||
+          process.env.NETLIFY ||
+          process.env.RAILWAY_ENVIRONMENT ||
+          process.env.NODE_ENV === "production"),
+      nodeEnv: process.env.NODE_ENV,
+    });
 
     // Convert to buffer for image manipulation
     const bufferStart = Date.now();
@@ -124,9 +163,7 @@ export async function processOCR(
  * @param imageUrl - Image URL to process
  * @returns Promise resolving to OCR result
  */
-export async function processOCRFromURL(
-  imageUrl: string
-): Promise<OCRResult> {
+export async function processOCRFromURL(imageUrl: string): Promise<OCRResult> {
   try {
     // Fetch the image and convert to Blob
     const response = await fetch(imageUrl);
