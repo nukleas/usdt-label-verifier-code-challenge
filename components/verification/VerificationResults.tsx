@@ -98,14 +98,6 @@ export default function VerificationResults({
         <span className="text-base margin-top-1">
           Processing time: {(processingTime / 1000).toFixed(2)}s
         </span>
-        {rotationDescription && (
-          <>
-            <br />
-            <span className="text-base margin-top-05">
-              Orientation normalization: {rotationDescription}
-            </span>
-          </>
-        )}
       </Alert>
 
       {/* Required Fields */}
@@ -155,15 +147,33 @@ export default function VerificationResults({
         </div>
       )}
 
-      {/* Raw OCR Text and Blocks (Collapsible) */}
+      {/* Technical Details (Collapsible) */}
       <div className="margin-top-4">
         <Accordion
           items={[
             {
-              title: "View Extracted Text from Label",
+              title: "Technical Details",
               content: (
                 <div className="padding-2 bg-base-lightest">
-                  <h5 className="margin-top-0">Full Text:</h5>
+                  <h5 className="margin-top-0">Processing Information:</h5>
+                  <ul className="usa-list">
+                    <li>
+                      <strong>Processing Time:</strong>{" "}
+                      {(processingTime / 1000).toFixed(2)}s
+                    </li>
+                    {rotationDescription && (
+                      <li>
+                        <strong>Image Orientation:</strong>{" "}
+                        {rotationDescription}
+                      </li>
+                    )}
+                    <li>
+                      <strong>OCR Confidence:</strong>{" "}
+                      {result.ocrConfidence?.toFixed(1) || "N/A"}%
+                    </li>
+                  </ul>
+
+                  <h5 className="margin-top-3">Full Extracted Text:</h5>
                   <pre
                     className="font-mono-xs padding-2 bg-white border-1px border-base-light"
                     style={{ whiteSpace: "pre-wrap" }}
@@ -241,7 +251,7 @@ export default function VerificationResults({
                 </div>
               ),
               expanded: showRawText,
-              id: "raw-text",
+              id: "technical-details",
               headingLevel: "h4",
             },
           ]}

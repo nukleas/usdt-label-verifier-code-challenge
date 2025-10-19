@@ -164,19 +164,21 @@ export default function ImageUpload({
           </div>
 
           <div className="border-2px border-base-lighter padding-2 bg-base-lightest radius-md">
-            <Image
-              src={preview}
-              alt="Label preview"
-              width={800}
-              height={600}
-              className="maxw-full height-auto display-block"
-              style={{
-                maxHeight: "400px",
-                margin: "0 auto",
-                width: "auto",
-                height: "auto",
-              }}
-            />
+            <div className="image-aspect-container">
+              <Image
+                src={preview}
+                alt="Label preview"
+                width={800}
+                height={600}
+                className="maxw-full height-auto display-block"
+                style={{
+                  maxHeight: "400px",
+                  margin: "0 auto",
+                  width: "auto",
+                  height: "auto",
+                }}
+              />
+            </div>
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./uswds.css";
 import "./globals.css";
+import USWDSInitializer from "@/components/USWDSInitializer";
 
 export const metadata: Metadata = {
   title: "TTB Label Verification - Alcohol and Tobacco Tax and Trade Bureau",
@@ -15,7 +16,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <USWDSInitializer />
+        {children}
+      </body>
     </html>
   );
 }

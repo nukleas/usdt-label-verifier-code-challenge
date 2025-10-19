@@ -120,12 +120,17 @@ export default function LabelForm({
       <h2 className="margin-top-0">Label Information</h2>
       <p className="text-base">
         Enter the information from your alcohol beverage label application form.
+        All fields marked with an asterisk (*) are required for verification.
       </p>
 
       <FormGroup error={!!errors.brandName}>
         <Label htmlFor="brandName">
           Brand Name <span className="text-secondary-vivid">*</span>
         </Label>
+        <span className="usa-hint">
+          Enter the exact brand name as it appears on the label (e.g.,
+          &ldquo;Old Tom Distillery&rdquo;)
+        </span>
         {errors.brandName && (
           <span className="usa-error-message" role="alert">
             {errors.brandName}
@@ -148,7 +153,9 @@ export default function LabelForm({
           Product Class/Type <span className="text-secondary-vivid">*</span>
         </Label>
         <span className="usa-hint">
-          e.g., Kentucky Straight Bourbon Whiskey, IPA, Red Wine
+          Enter the exact product designation as shown on the label (e.g.,
+          &ldquo;Kentucky Straight Bourbon Whiskey&rdquo;, &ldquo;India Pale
+          Ale&rdquo;, &ldquo;Red Wine&rdquo;)
         </span>
         {errors.productType && (
           <span className="usa-error-message" role="alert">
@@ -171,7 +178,10 @@ export default function LabelForm({
         <Label htmlFor="alcoholContent">
           Alcohol Content (ABV) <span className="text-secondary-vivid">*</span>
         </Label>
-        <span className="usa-hint">Enter as percentage (e.g., 45 or 45%)</span>
+        <span className="usa-hint">
+          Enter the alcohol content exactly as shown on the label (e.g.,
+          &ldquo;45&rdquo;, &ldquo;45%&rdquo;, &ldquo;90 Proof&rdquo;)
+        </span>
         {errors.alcoholContent && (
           <span className="usa-error-message" role="alert">
             {errors.alcoholContent}
@@ -191,7 +201,10 @@ export default function LabelForm({
 
       <FormGroup error={!!errors.netContents}>
         <Label htmlFor="netContents">Net Contents (Optional)</Label>
-        <span className="usa-hint">e.g., 750 mL, 12 oz, 1 L</span>
+        <span className="usa-hint">
+          Enter the volume exactly as shown on the label (e.g., &ldquo;750
+          mL&rdquo;, &ldquo;12 fl oz&rdquo;, &ldquo;1 L&rdquo;)
+        </span>
         {errors.netContents && (
           <span className="usa-error-message" role="alert">
             {errors.netContents}

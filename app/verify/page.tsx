@@ -5,21 +5,25 @@
  *
  * Main page for TTB label verification
  * Combines form, image upload, and results display
+ * Enhanced with TTB-inspired styling and navigation
  */
 
 import React, { useState, useCallback } from "react";
+import Image from "next/image";
 import {
   GridContainer,
   Grid,
   Alert,
-  Header,
-  Footer,
-  FooterNav,
   Link,
+  Accordion,
+  Banner,
 } from "@trussworks/react-uswds";
 import LabelForm from "@/components/verification/LabelForm";
 import VerificationResults from "@/components/verification/VerificationResults";
 import LoadingState from "@/components/verification/LoadingState";
+import SiteHeader from "@/components/layout/SiteHeader";
+import SiteFooter from "@/components/layout/SiteFooter";
+import Breadcrumb from "@/components/layout/Breadcrumb";
 import type { LabelFormData, VerificationResult } from "@/types/verification";
 
 export default function VerifyPage() {
@@ -97,33 +101,107 @@ export default function VerifyPage() {
 
   return (
     <>
-      <Header basic>
-        <div className="usa-nav-container">
-          <div className="usa-navbar">
-            <div className="usa-logo" id="basic-logo">
-              <em className="usa-logo__text">
-                <Link
-                  href="/"
-                  title="Home"
-                  aria-label="TTB Label Verification home"
-                >
-                  TTB Label Verification
-                </Link>
-              </em>
+      <Banner>
+        <div className="usa-accordion">
+          <header className="usa-banner__header">
+            <div className="usa-banner__inner">
+              <div className="grid-col-auto">
+                <Image
+                  className="usa-banner__header-flag"
+                  src="/img/us_flag_small.png"
+                  alt="U.S. flag"
+                  width={16}
+                  height={11}
+                />
+              </div>
+              <div className="grid-col-fill tablet:grid-col-auto">
+                <p className="usa-banner__header-text">
+                  <strong>DEMONSTRATION APPLICATION</strong> - This is not an
+                  official government website
+                </p>
+                <p className="usa-banner__header-action" aria-hidden="true">
+                  TTB Label Verification Demo
+                </p>
+              </div>
+              <button
+                className="usa-accordion__button usa-banner__button"
+                aria-expanded="false"
+                aria-controls="gov-banner"
+              >
+                <span className="usa-banner__button-text">About this demo</span>
+              </button>
+            </div>
+          </header>
+          <div
+            className="usa-banner__content usa-accordion__content"
+            id="gov-banner"
+            hidden
+          >
+            <div className="grid-row grid-gap-lg">
+              <div className="usa-banner__guidance tablet:grid-col-6">
+                <Image
+                  className="usa-banner__icon usa-media-block__img"
+                  src="/img/icon-dot-gov.svg"
+                  role="img"
+                  alt=""
+                  aria-hidden="true"
+                  width={24}
+                  height={24}
+                />
+                <div className="usa-media-block__body">
+                  <p>
+                    <strong>This is a demo application.</strong>
+                    <br />
+                    This application simulates the TTB label verification
+                    process for educational and testing purposes.
+                  </p>
+                </div>
+              </div>
+              <div className="usa-banner__guidance tablet:grid-col-6">
+                <Image
+                  className="usa-banner__icon usa-media-block__img"
+                  src="/img/icon-https.svg"
+                  role="img"
+                  alt=""
+                  aria-hidden="true"
+                  width={24}
+                  height={24}
+                />
+                <div className="usa-media-block__body">
+                  <p>
+                    <strong>Built with USWDS.</strong>
+                    <br />
+                    This application uses the U.S. Web Design System to ensure
+                    accessibility and consistency with government design
+                    standards.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </Header>
+      </Banner>
+
+      <SiteHeader currentPath="/verify" />
 
       <main id="main-content">
-        <GridContainer className="padding-y-4">
-          {/* Page Header */}
+        <GridContainer className="padding-y-2">
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Label Verification" },
+            ]}
+          />
+
+          {/* Page Header Section */}
           <div className="margin-bottom-4">
             <h1 className="margin-top-0">Alcohol Label Verification</h1>
             <p className="usa-intro">
               Upload an image of your alcohol beverage label and enter the
               corresponding form information. Our system will verify if the
-              label matches your submission.
+              label matches your submission using optical character recognition
+              and text matching algorithms.
             </p>
           </div>
 
@@ -138,105 +216,151 @@ export default function VerifyPage() {
           <Grid row gap>
             {/* Left Column - Form (Always Visible) */}
             <Grid tablet={{ col: 12 }} desktop={{ col: 6 }}>
-              <LabelForm
-                onSubmit={handleSubmit}
-                loading={loading}
-                onReset={handleReset}
-              />
+              <div className="verification-form margin-bottom-4">
+                <LabelForm
+                  onSubmit={handleSubmit}
+                  loading={loading}
+                  onReset={handleReset}
+                />
+              </div>
             </Grid>
 
             {/* Right Column - Instructions / Loading / Results */}
             <Grid tablet={{ col: 12 }} desktop={{ col: 6 }}>
-              {/* Instructions (Initial State) */}
-              {!result && !loading && (
-                <div className="bg-base-lightest padding-3 border-1px border-base-lighter">
-                  <h3 className="margin-top-0">Instructions</h3>
-                  <ol className="usa-list">
-                    <li>
-                      <strong>Enter Label Information:</strong> Fill in the
-                      brand name, product type, and alcohol content as they
-                      appear on your label.
-                    </li>
-                    <li>
-                      <strong>Upload Label Image:</strong> Select a clear image
-                      of your alcohol label (JPEG, PNG, or WebP format).
-                    </li>
-                    <li>
-                      <strong>Verify:</strong> Click &ldquo;Verify Label&rdquo;
-                      to process your submission.
-                    </li>
-                    <li>
-                      <strong>Review Results:</strong> Check if your label
-                      matches the form data and review any discrepancies.
-                    </li>
-                  </ol>
+              <div className="verification-content-area">
+                {/* Instructions (Initial State) */}
+                {!result && !loading && (
+                  <div className="margin-bottom-4">
+                    <div className="bg-base-lightest padding-4 border-1px border-base-lighter margin-bottom-4">
+                      <h3 className="margin-top-0 margin-bottom-3">
+                        Quick Start
+                      </h3>
+                      <ol className="usa-list margin-bottom-3">
+                        <li>
+                          <strong>Enter Label Information:</strong> Fill in the
+                          brand name, product type, and alcohol content exactly
+                          as they appear on your label.
+                        </li>
+                        <li>
+                          <strong>Upload Label Image:</strong> Select a clear
+                          image of your alcohol label (JPEG, PNG, or WebP
+                          format).
+                        </li>
+                        <li>
+                          <strong>Verify:</strong> Click &ldquo;Verify
+                          Label&rdquo; to process your submission.
+                        </li>
+                      </ol>
 
-                  <h4>Tips for Best Results:</h4>
-                  <ul className="usa-list">
-                    <li>Use a high-quality, well-lit image</li>
-                    <li>Ensure all text is clearly visible</li>
-                    <li>Avoid glare or reflections on the label</li>
-                    <li>Image should be at least 800x600 pixels</li>
-                  </ul>
-                </div>
-              )}
+                      <h4 className="margin-bottom-2">
+                        Tips for Best Results:
+                      </h4>
+                      <ul className="usa-list">
+                        <li>Use a high-quality, well-lit image</li>
+                        <li>Ensure all text is clearly visible</li>
+                        <li>Image should be at least 800x600 pixels</li>
+                      </ul>
+                    </div>
 
-              {/* Loading State */}
-              {loading && (
-                <LoadingState
-                  message="Processing label image with OCR..."
-                  progress={progress}
-                />
-              )}
+                    {/* Additional Information - More Compact */}
+                    <Accordion
+                      items={[
+                        {
+                          title: "How the Verification Process Works",
+                          content: (
+                            <div className="padding-2">
+                              <ol className="usa-list">
+                                <li>
+                                  <strong>Text Extraction:</strong> Our OCR
+                                  system extracts all readable text from your
+                                  label image, including text in various
+                                  orientations.
+                                </li>
+                                <li>
+                                  <strong>Field Matching:</strong> We compare
+                                  the extracted text against your form data
+                                  using fuzzy matching algorithms to account for
+                                  minor variations.
+                                </li>
+                                <li>
+                                  <strong>Compliance Checking:</strong> The
+                                  system verifies required elements like
+                                  government warning statements and regulatory
+                                  compliance.
+                                </li>
+                                <li>
+                                  <strong>Results Display:</strong> You receive
+                                  detailed results showing which fields match,
+                                  mismatch, or were not found.
+                                </li>
+                              </ol>
+                            </div>
+                          ),
+                          id: "process-overview",
+                          headingLevel: "h4",
+                          expanded: false,
+                        },
+                        {
+                          title: "About This Tool",
+                          content: (
+                            <div className="padding-2">
+                              <p>
+                                This demonstration application simulates the TTB
+                                label verification process for educational and
+                                testing purposes. It uses optical character
+                                recognition (OCR) technology to extract text
+                                from alcohol label images and compares it
+                                against submitted form data.
+                              </p>
+                              <p>
+                                <strong>Important:</strong> This is not an
+                                official TTB tool. For actual label approval
+                                services, visit{" "}
+                                <Link
+                                  href="https://www.ttb.gov"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  ttb.gov
+                                </Link>
+                                .
+                              </p>
+                            </div>
+                          ),
+                          id: "about-tool",
+                          headingLevel: "h4",
+                          expanded: false,
+                        },
+                      ]}
+                    />
+                  </div>
+                )}
 
-              {/* Results */}
-              {result && !loading && (
-                <VerificationResults
-                  result={result}
-                  onReset={handleReset}
-                  imageFile={imageFile || undefined}
-                />
-              )}
+                {/* Loading State */}
+                {loading && (
+                  <div>
+                    <LoadingState
+                      message="Processing label image with OCR..."
+                      progress={progress}
+                    />
+                  </div>
+                )}
+
+                {/* Results */}
+                {result && !loading && (
+                  <VerificationResults
+                    result={result}
+                    onReset={handleReset}
+                    imageFile={imageFile || undefined}
+                  />
+                )}
+              </div>
             </Grid>
           </Grid>
         </GridContainer>
       </main>
 
-      <Footer
-        size="slim"
-        primary={
-          <FooterNav
-            links={[
-              <Link href="/" key="home">
-                Home
-              </Link>,
-              <Link
-                href="https://www.ttb.gov"
-                key="ttb"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                TTB.gov
-              </Link>,
-              <Link
-                href="https://github.com"
-                key="github"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                GitHub
-              </Link>,
-            ]}
-          />
-        }
-        secondary={
-          <div className="usa-footer__contact-info">
-            <p className="usa-footer__contact-heading">
-              TTB Label Verification - Automated Compliance Tool
-            </p>
-          </div>
-        }
-      />
+      <SiteFooter />
     </>
   );
 }

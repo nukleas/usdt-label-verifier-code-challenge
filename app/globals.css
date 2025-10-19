@@ -1,1 +1,366 @@
 /* USWDS styles imported in layout.tsx */
+
+/* Custom government-style utilities */
+.gov-section {
+  margin-bottom: 3rem;
+}
+
+.gov-section-header {
+  border-bottom: 2px solid #005ea2;
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+.gov-process-step {
+  background: #f8f9fa;
+  border-left: 4px solid #005ea2;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.gov-process-step h4 {
+  margin-top: 0;
+  color: #005ea2;
+}
+
+.gov-info-box {
+  background: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 4px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.gov-info-box h4 {
+  margin-top: 0;
+  color: #005ea2;
+}
+
+.gov-warning-box {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.gov-warning-box h4 {
+  margin-top: 0;
+  color: #856404;
+}
+
+/* Enhanced breadcrumb styling */
+.usa-breadcrumb {
+  margin-bottom: 2rem;
+}
+
+/* Professional spacing for sections */
+.verification-section {
+  margin-bottom: 3rem;
+}
+
+.verification-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Enhanced form styling with better spacing */
+.verification-form {
+  background: #ffffff;
+  border: 1px solid #dfe1e2;
+  border-radius: 4px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Results styling enhancements with better spacing */
+.verification-results {
+  background: #ffffff;
+  border: 1px solid #dfe1e2;
+  border-radius: 4px;
+  padding: 2.5rem;
+  margin-top: 2rem;
+}
+
+/* Improved spacing for form groups */
+.verification-form .usa-form-group {
+  margin-bottom: 2rem;
+}
+
+.verification-form .usa-form-group:last-child {
+  margin-bottom: 0;
+}
+
+/* Better spacing for field verification results */
+.field-verification {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid #dfe1e2;
+}
+
+.field-verification:last-child {
+  margin-bottom: 0;
+}
+
+/* Improved spacing for alert messages */
+.usa-alert {
+  margin-bottom: 2rem;
+}
+
+/* Better spacing for accordion sections */
+.usa-accordion {
+  margin-top: 2rem;
+}
+
+/* Enhanced spacing for lists */
+.usa-list {
+  margin-bottom: 1.5rem;
+}
+
+.usa-list li {
+  margin-bottom: 0.5rem;
+}
+
+/* Prevent layout jank with reserved space */
+.verification-content-area {
+  min-height: 600px;
+}
+
+.image-aspect-container {
+  aspect-ratio: 4 / 3;
+  max-width: 100%;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+/* Simple fade for content changes - accessibility safe */
+@media (prefers-reduced-motion: no-preference) {
+  .content-transition {
+    transition: opacity 0.15s ease-in-out;
+  }
+}
+
+/* Enhanced government-style header and logo */
+.usa-logo__text-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+}
+
+.usa-logo__text-primary {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #005ea2;
+  letter-spacing: 0.5px;
+}
+
+.usa-logo__text-secondary {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #1b1b1b;
+  margin-top: -2px;
+}
+
+.usa-logo__text-demo {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #d54309;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 1px;
+}
+
+/* Enhanced banner styling for demo notice */
+.usa-banner__header-text {
+  font-weight: 600;
+}
+
+.usa-banner__header-text strong {
+  color: #d54309;
+}
+
+/* Full-width header and banner styling */
+.usa-header--full-width {
+  width: 100%;
+  max-width: none;
+}
+
+.usa-header--full-width .usa-nav-container {
+  max-width: none;
+  width: 100%;
+}
+
+/* Ensure banner spans full width and aligns with header */
+.usa-banner {
+  width: 100%;
+  max-width: none;
+}
+
+.usa-banner__inner {
+  max-width: none;
+  width: 100%;
+}
+
+/* Enhanced navigation styling */
+.usa-header {
+  background-color: #005ea2; /* Government blue */
+}
+
+.usa-nav {
+  background-color: #005ea2;
+}
+
+.usa-nav__link {
+  color: #ffffff !important;
+  font-weight: 500;
+}
+
+.usa-nav__link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff !important;
+}
+
+.usa-nav__link.usa-current {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff !important;
+}
+
+/* Mobile navigation enhancements */
+@media (max-width: 63.99em) {
+  .usa-nav {
+    background-color: #005ea2;
+  }
+  
+  .usa-nav__link {
+    color: #ffffff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Reduce excessive spacing and padding */
+.usa-hero {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.usa-section {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+/* Reduce default USWDS spacing */
+.margin-bottom-4 {
+  margin-bottom: 1.5rem !important;
+}
+
+.margin-bottom-6 {
+  margin-bottom: 2rem !important;
+}
+
+/* Reduce padding on main content areas */
+.padding-y-2 {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+
+/* Reduce spacing in verification form */
+.verification-form {
+  margin-bottom: 1.5rem;
+}
+
+/* Reduce spacing in content sections */
+.verification-content-area {
+  min-height: 500px; /* Reduced from 600px */
+}
+
+/* Professional typography hierarchy */
+.gov-heading {
+  font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.gov-subheading {
+  font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* Enhanced button styling */
+.gov-button-primary {
+  background-color: #005ea2;
+  border-color: #005ea2;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.gov-button-primary:hover {
+  background-color: #004080;
+  border-color: #004080;
+}
+
+/* Professional link styling */
+.gov-link {
+  color: #005ea2;
+  text-decoration: underline;
+}
+
+.gov-link:hover {
+  color: #004080;
+}
+
+/* Enhanced alert styling */
+.gov-alert-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.gov-alert-error {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.gov-alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+
+/* Professional table styling */
+.gov-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.gov-table th,
+.gov-table td {
+  border: 1px solid #dfe1e2;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.gov-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .gov-section {
+    margin-bottom: 2rem;
+  }
+  
+  .verification-form,
+  .verification-results {
+    padding: 1.5rem;
+  }
+  
+  .gov-process-step {
+    padding: 1rem;
+  }
+}
