@@ -42,36 +42,54 @@ export async function createTesseractWorker() {
 
   try {
     if (isServerless) {
-      // For serverless environments, use local bundled files with proper paths
+      // For serverless environments, point explicitly to bundled assets included via outputFileTracingIncludes
       console.log(
-        "Creating Tesseract worker for serverless environment using local bundled files"
+        "Creating Tesseract worker for serverless environment using bundled assets"
       );
 
+      const bundledBase = resolve(process.cwd(), "public/tesseract-bundled");
+
+      // Resolve Node worker script absolutely; Next keeps these deps external on the server
+      let nodeWorkerPath: string | undefined;
       try {
-        // Use the Node.js worker directly from the externalized tesseract.js package
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        nodeWorkerPath = require.resolve(
+          "tesseract.js/src/worker-script/node/index.js"
+        );
+      } catch (e) {
+        console.warn(
+          "Failed to resolve node worker script via require.resolve",
+          e
+        );
+      }
+
+      // Try SIMD core first, then fall back to LSTM
+      const coreSimdPath = resolve(bundledBase, "tesseract-core-simd.wasm.js");
+      const coreLstmPath = resolve(bundledBase, "tesseract-core-lstm.wasm.js");
+      const langPath = resolve(bundledBase, "traineddata");
+
+      try {
         worker = await createWorker("eng", 1, {
-          workerPath: "tesseract.js/src/worker-script/node/index.js",
+          workerPath: nodeWorkerPath,
+          corePath: coreSimdPath,
+          langPath,
           gzip: false,
         });
-        console.log(
-          "Successfully created worker using Node.js worker from external package"
-        );
-      } catch (localError) {
-        console.warn(
-          "Local files failed, trying default configuration:",
-          localError
-        );
-        // Fallback to default configuration
+        console.log("Worker initialized with SIMD core");
+      } catch (simdError) {
+        console.warn("SIMD core failed, falling back to LSTM core", simdError);
         try {
           worker = await createWorker("eng", 1, {
+            workerPath: nodeWorkerPath,
+            corePath: coreLstmPath,
+            langPath,
             gzip: false,
           });
-          console.log(
-            "Successfully created worker using default configuration (fallback)"
-          );
-        } catch (defaultError) {
-          console.error("All Tesseract configurations failed:", defaultError);
-          throw defaultError;
+          console.log("Worker initialized with LSTM core (fallback)");
+        } catch (lstmError) {
+          console.error("Bundled core paths failed:", lstmError);
+          // Final fallback: let tesseract.js attempt auto-detection
+          worker = await createWorker("eng", 1, { gzip: false });
         }
       }
     } else if (isNode) {
