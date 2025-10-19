@@ -39,12 +39,11 @@ export class ServerOCRProcessor {
     console.log("Initializing server-side Tesseract worker...");
 
     try {
-      // Use auto-detection with correct language data URL
-      console.log("Using Tesseract.js auto-detection with correct language data URL");
+      // Use local installation - we have tesseract.js installed via npm
+      console.log("Using local Tesseract.js installation");
 
       const workerConfig = {
         gzip: false,
-        langPath: "https://tessdata.projectnaptha.com/4.0.0", // Use working CDN for language data
         logger: (m: { status?: string; progress?: number }) => {
           if (m.status === "recognizing text") {
             console.log(
