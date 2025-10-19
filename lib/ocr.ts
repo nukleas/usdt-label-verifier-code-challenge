@@ -42,17 +42,31 @@ export async function createTesseractWorker() {
 
   try {
     if (isServerless) {
-      // For serverless environments, let Tesseract.js handle everything automatically
+      // For serverless environments, use CDN to avoid WASM file issues
       console.log(
-        "Creating Tesseract worker for serverless environment using default configuration"
+        "Creating Tesseract worker for serverless environment using CDN"
       );
 
-      // With serverExternalPackages, Tesseract.js should work out of the box
-      // Let it use its default configuration and find files automatically
-      worker = await createWorker("eng", 1, {
-        gzip: false,
-      });
-      console.log("Successfully created worker using default configuration");
+      try {
+        // Use CDN for all assets to avoid local file issues in serverless
+        worker = await createWorker("eng", 1, {
+          workerPath: "https://unpkg.com/tesseract.js@5.0.4/dist/worker.min.js",
+          corePath:
+            "https://unpkg.com/tesseract.js-core@5.0.0/tesseract-core-simd.wasm.js",
+          langPath: "https://tessdata.projectnaptha.com/5.0.0",
+          gzip: false,
+        });
+        console.log("Successfully created worker using CDN");
+      } catch (cdnError) {
+        console.warn("CDN failed, trying default configuration:", cdnError);
+        // Fallback to default (may not work but at least won't crash)
+        worker = await createWorker("eng", 1, {
+          gzip: false,
+        });
+        console.log(
+          "Successfully created worker using default configuration (fallback)"
+        );
+      }
     } else if (isNode) {
       // Local development and testing
       console.log("Creating Tesseract worker for local Node.js environment");
