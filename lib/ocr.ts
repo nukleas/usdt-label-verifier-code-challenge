@@ -48,15 +48,14 @@ export async function createTesseractWorker() {
       );
 
       try {
-        // Use absolute paths to bundled files that should be available in serverless
-        const baseDir = resolve(process.cwd(), "public", "tesseract-bundled");
+        // Use the Node.js worker directly from the externalized tesseract.js package
         worker = await createWorker("eng", 1, {
-          workerPath: resolve(baseDir, "worker.min.js"),
-          corePath: resolve(baseDir, "tesseract-core-simd.wasm.js"),
-          langPath: resolve(baseDir, "traineddata"),
+          workerPath: "tesseract.js/src/worker-script/node/index.js",
           gzip: false,
         });
-        console.log("Successfully created worker using local bundled files");
+        console.log(
+          "Successfully created worker using Node.js worker from external package"
+        );
       } catch (localError) {
         console.warn(
           "Local files failed, trying default configuration:",
