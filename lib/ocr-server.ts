@@ -39,16 +39,10 @@ export class ServerOCRProcessor {
     console.log("Initializing server-side Tesseract worker...");
 
     try {
-      // Detect if running in serverless environment (Vercel, etc.)
-      const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY;
+      // Use auto-detection for all environments - let Tesseract.js handle paths
+      console.log("Using Tesseract.js auto-detection for all environments");
       
-      const workerConfig: {
-        gzip: boolean;
-        logger: (m: { status?: string; progress?: number }) => void;
-        workerPath?: string;
-        corePath?: string;
-        langPath?: string;
-      } = {
+      const workerConfig = {
         gzip: false,
         logger: (m: { status?: string; progress?: number }) => {
           if (m.status === "recognizing text") {
@@ -58,31 +52,8 @@ export class ServerOCRProcessor {
           }
         },
       };
-
-      if (isServerless) {
-        // Use CDN paths for serverless environments
-        console.log("Detected serverless environment, using CDN paths");
-        workerConfig.workerPath = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js";
-        workerConfig.corePath = "https://cdn.jsdelivr.net/npm/tesseract.js-core@5";
-        workerConfig.langPath = "https://tessdata.projectnaptha.com/4.0.0";
-      } else {
-        // Use local paths for development
-        console.log("Using local development paths");
-        workerConfig.workerPath = "./node_modules/tesseract.js/src/worker-script/node/index.js";
-      }
       
-      // Fallback: if explicit paths fail, let Tesseract.js auto-detect
-      try {
-        this.worker = await createWorker("eng", 1, workerConfig);
-      } catch (pathError) {
-        console.warn("Failed with explicit paths, falling back to auto-detection:", pathError);
-        // Remove explicit paths and let Tesseract.js handle everything
-        const autoConfig = {
-          gzip: false,
-          logger: workerConfig.logger,
-        };
-        this.worker = await createWorker("eng", 1, autoConfig);
-      }
+      this.worker = await createWorker("eng", 1, workerConfig);
 
       // Configure for better label recognition
       await this.worker.setParameters({
