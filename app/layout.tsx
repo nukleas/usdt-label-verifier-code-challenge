@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./uswds.css";
-import "./globals.css";
+import "./globals.scss";
 
 export const metadata: Metadata = {
   title: "TTB Label Verification - Alcohol and Tobacco Tax and Trade Bureau",
