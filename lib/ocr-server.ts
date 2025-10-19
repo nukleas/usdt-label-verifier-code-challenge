@@ -39,20 +39,23 @@ export class ServerOCRProcessor {
     console.log("Initializing server-side Tesseract worker...");
 
     try {
-      // Use auto-detection for all environments - let Tesseract.js handle paths
-      console.log("Using Tesseract.js auto-detection for all environments");
-      
+      // Use auto-detection with correct language data URL
+      console.log("Using Tesseract.js auto-detection with correct language data URL");
+
       const workerConfig = {
         gzip: false,
+        langPath: "https://tessdata.projectnaptha.com/4.0.0", // Use working CDN for language data
         logger: (m: { status?: string; progress?: number }) => {
           if (m.status === "recognizing text") {
-            console.log(`OCR Progress: ${Math.round((m.progress || 0) * 100)}%`);
+            console.log(
+              `OCR Progress: ${Math.round((m.progress || 0) * 100)}%`
+            );
           } else if (m.status) {
             console.log(`OCR Status: ${m.status}`);
           }
         },
       };
-      
+
       this.worker = await createWorker("eng", 1, workerConfig);
 
       // Configure for better label recognition
