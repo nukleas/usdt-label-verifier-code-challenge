@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   // Ensure proper handling of Tesseract.js in serverless environments
   serverExternalPackages: ["tesseract.js"],
   // Configure webpack to handle Tesseract.js properly
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, webpack }) => {
     if (isServer) {
       // Exclude Tesseract.js worker files from server bundle
       config.externals = config.externals || [];
@@ -12,6 +12,17 @@ const nextConfig: NextConfig = {
         "tesseract.js": "tesseract.js",
       });
     }
+
+    // Some versions of tesseract.js-core still reference the legacy ASM build.
+    // Replace that import with the modern WASM shim so webpack can resolve it.
+    config.plugins = config.plugins || [];
+    config.plugins.push(
+      new webpack.NormalModuleReplacementPlugin(
+        /tesseract-core\.asm$/,
+        "./tesseract-core.wasm.js"
+      )
+    );
+
     return config;
   },
   // Ensure WASM files are served with correct MIME type

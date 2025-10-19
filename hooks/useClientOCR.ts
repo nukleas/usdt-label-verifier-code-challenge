@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback } from "react";
-import { createWorker, type Block, type Word } from "tesseract.js";
+import { createWorker, type Page } from "tesseract.js";
 import type { OCRResult, TextBlock } from "@/types/verification";
 
 export interface UseClientOCRReturn {
@@ -99,7 +99,7 @@ export function useClientOCR(): UseClientOCRReturn {
           blocks: TextBlock[];
           confidence: number;
           wordCount: number;
-          rawResult: Block[] | null;
+          rawResult: Page;
         }> = [];
 
         // Get original image dimensions
