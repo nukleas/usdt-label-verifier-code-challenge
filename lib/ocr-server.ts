@@ -40,11 +40,13 @@ export class ServerOCRProcessor {
 
     try {
       // Use local installation - we have tesseract.js installed via npm
-      console.log("Using local Tesseract.js installation with local language data");
+      console.log(
+        "Using local Tesseract.js installation with local language data"
+      );
 
       const workerConfig = {
         gzip: true, // Enable gzip since we have .gz files
-        langPath: "./node_modules/@tesseract.js-data", // Point to local language data
+        langPath: "./node_modules/@tesseract.js-data/eng/4.0.0_best_int", // Point to exact directory with eng.traineddata.gz
         logger: (m: { status?: string; progress?: number }) => {
           if (m.status === "recognizing text") {
             console.log(
