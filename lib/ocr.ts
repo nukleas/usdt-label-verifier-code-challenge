@@ -47,10 +47,19 @@ export async function createTesseractWorker() {
         "Creating Tesseract worker for serverless environment using local bundled files"
       );
       worker = await createWorker("eng", 1, {
-        // Use locally bundled Tesseract.js files (no CDN dependency)
-        workerPath: "/tesseract-bundled/worker.min.js",
-        corePath: "/tesseract-bundled/tesseract-core-simd.wasm.js",
-        langPath: "/tesseract-bundled/traineddata",
+        // Use absolute paths for serverless environments
+        workerPath: resolve(
+          process.cwd(),
+          "public/tesseract-bundled/worker.min.js"
+        ),
+        corePath: resolve(
+          process.cwd(),
+          "public/tesseract-bundled/tesseract-core-simd.wasm.js"
+        ),
+        langPath: resolve(
+          process.cwd(),
+          "public/tesseract-bundled/traineddata"
+        ),
         gzip: false,
       });
     } else if (isNode) {

@@ -80,6 +80,16 @@ if (fs.existsSync(langSource)) {
     fs.copyFileSync(engSource, engTarget);
     console.log("✓ Copied eng.traineddata");
   }
+} else {
+  // Fallback: copy from root directory if available
+  const rootEngSource = path.join(__dirname, "../eng.traineddata");
+  if (fs.existsSync(rootEngSource)) {
+    if (!fs.existsSync(langTarget)) {
+      fs.mkdirSync(langTarget, { recursive: true });
+    }
+    fs.copyFileSync(rootEngSource, path.join(langTarget, "eng.traineddata"));
+    console.log("✓ Copied eng.traineddata from root directory");
+  }
 }
 
 console.log("\n🎉 Tesseract.js assets copied successfully!");
