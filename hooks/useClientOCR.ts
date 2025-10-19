@@ -6,8 +6,8 @@
  */
 
 import { useState, useCallback } from "react";
-import { createWorker } from "tesseract.js";
-import type { OCRResult } from "@/types/verification";
+import { createWorker, type Block, type Word } from "tesseract.js";
+import type { OCRResult, TextBlock } from "@/types/verification";
 
 export interface UseClientOCRReturn {
   processImage: (imageFile: File) => Promise<OCRResult>;
@@ -96,10 +96,10 @@ export function useClientOCR(): UseClientOCRReturn {
         const attempts: Array<{
           angle: number;
           text: string;
-          blocks: any[];
+          blocks: TextBlock[];
           confidence: number;
           wordCount: number;
-          rawResult: any;
+          rawResult: Block[] | null;
         }> = [];
 
         // Get original image dimensions
@@ -130,29 +130,19 @@ export function useClientOCR(): UseClientOCRReturn {
             { blocks: true }
           );
 
-          // Extract words
-          const words: any[] = [];
-          if (result.data.blocks) {
-            for (const block of result.data.blocks) {
-              if (block.paragraphs) {
-                for (const paragraph of block.paragraphs) {
-                  if (paragraph.lines) {
-                    for (const line of paragraph.lines) {
-                      if (line.words) {
-                        for (const word of line.words) {
-                          words.push({
-                            text: word.text,
-                            confidence: word.confidence,
-                            bbox: word.bbox,
-                          });
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+          // Extract words using clean functional approach
+          const words: TextBlock[] = result.data.blocks
+            ? result.data.blocks
+                .flatMap((block) => block.paragraphs)
+                .flatMap((paragraph) => paragraph.lines)
+                .flatMap((line) => line.words)
+                .filter((word) => word.text.trim().length > 0)
+                .map((word) => ({
+                  text: word.text.trim(),
+                  confidence: word.confidence,
+                  bbox: word.bbox,
+                }))
+            : [];
 
           attempts.push({
             angle,

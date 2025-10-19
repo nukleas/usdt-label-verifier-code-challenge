@@ -5,7 +5,7 @@
  * and server-side processing without client-side dependencies
  */
 
-import { createWorker, type Worker } from "tesseract.js";
+import { createWorker, type Worker, type Block } from "tesseract.js";
 import type { OCRResult, TextBlock } from "@/types/verification";
 
 // Rotation angles to try (covers all 4 orientations)
@@ -38,26 +38,94 @@ export class ServerOCRProcessor {
   async initializeWorker(): Promise<void> {
     console.log("Initializing server-side Tesseract worker...");
 
-    this.worker = await createWorker("eng", 1, {
-      // Server-side specific configuration
-      workerPath: "./node_modules/tesseract.js/src/worker-script/node/index.js",
-      corePath: "./node_modules/tesseract.js-core",
-      logger: (m: { status?: string; progress?: number }) => {
-        if (m.status === "recognizing text") {
-          console.log(`OCR Progress: ${Math.round((m.progress || 0) * 100)}%`);
-        } else if (m.status) {
-          console.log(`OCR Status: ${m.status}`);
+    try {
+      // Resolve paths robustly - let tesseract.js auto-detect or use environment config
+      const workerConfig: {
+        workerPath?: string;
+        corePath?: string;
+        logger: (m: { status?: string; progress?: number }) => void;
+      } = {
+        logger: (m: { status?: string; progress?: number }) => {
+          if (m.status === "recognizing text") {
+            console.log(
+              `OCR Progress: ${Math.round((m.progress || 0) * 100)}%`
+            );
+          } else if (m.status) {
+            console.log(`OCR Status: ${m.status}`);
+          }
+        },
+      };
+
+      // Only set explicit paths if environment variables are provided
+      // Otherwise let tesseract.js auto-detect the correct paths
+      if (process.env.TESSERACT_WORKER_PATH) {
+        workerConfig.workerPath = process.env.TESSERACT_WORKER_PATH;
+      }
+      if (process.env.TESSERACT_CORE_PATH) {
+        workerConfig.corePath = process.env.TESSERACT_CORE_PATH;
+      }
+
+      // If no environment paths, try to resolve using require.resolve as fallback
+      if (
+        !process.env.TESSERACT_WORKER_PATH &&
+        !process.env.TESSERACT_CORE_PATH
+      ) {
+        try {
+          // Try to resolve tesseract.js paths dynamically
+          const tesseractWorkerPath = require.resolve(
+            "tesseract.js/src/worker-script/node/index.js"
+          );
+          const tesseractCorePath = require.resolve("tesseract.js-core");
+          workerConfig.workerPath = tesseractWorkerPath;
+          workerConfig.corePath = tesseractCorePath;
+          console.log("Resolved Tesseract paths using require.resolve");
+        } catch {
+          console.log(
+            "Could not resolve Tesseract paths, letting tesseract.js auto-detect"
+          );
+          // Let tesseract.js handle path resolution automatically
         }
-      },
-    });
+      }
 
-    // Configure for better label recognition
-    await this.worker.setParameters({
-      tessedit_pageseg_mode: "3",
-      preserve_interword_spaces: "1",
-    } as Record<string, string>);
+      this.worker = await createWorker("eng", 1, workerConfig);
 
-    console.log("Server-side Tesseract worker initialized successfully");
+      // Configure for better label recognition
+      await this.worker.setParameters({
+        tessedit_pageseg_mode: "3",
+        preserve_interword_spaces: "1",
+      } as Record<string, string>);
+
+      console.log("Server-side Tesseract worker initialized successfully");
+    } catch (error) {
+      console.error("Failed to initialize Tesseract worker:", error);
+
+      // Log detailed error information for debugging
+      if (error instanceof Error) {
+        console.error("Error name:", error.name);
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+      }
+
+      // Clean up any partial initialization
+      if (this.worker) {
+        try {
+          await this.worker.terminate();
+        } catch (terminateError) {
+          console.error(
+            "Error terminating worker during cleanup:",
+            terminateError
+          );
+        }
+        this.worker = null;
+      }
+
+      // Re-throw with more context
+      throw new Error(
+        `Tesseract worker initialization failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
   }
 
   /**
@@ -130,10 +198,22 @@ export class ServerOCRProcessor {
       );
     }
 
-    // Find the rotation with the most text (primary orientation)
-    const primaryAttempt = attempts.reduce((best, current) =>
-      current.wordCount > best.wordCount ? current : best
-    );
+    // Calculate robust scores for each rotation attempt
+    const scoredAttempts = attempts.map((attempt) => ({
+      ...attempt,
+      score: this.calculateOrientationScore(attempt),
+    }));
+
+    // Find the rotation with the best score (primary orientation)
+    const primaryAttempt = scoredAttempts.reduce((best, current) => {
+      if (current.score > best.score) {
+        return current;
+      } else if (current.score === best.score) {
+        // Fallback: prefer higher confidence when scores tie
+        return current.confidence > best.confidence ? current : best;
+      }
+      return best;
+    });
 
     // Merge all text from all rotations
     const allText = attempts
@@ -198,14 +278,26 @@ export class ServerOCRProcessor {
 
     const startTime = Date.now();
 
-    // Rotate if needed
+    // Extract image dimensions and rotate if needed
     let processBuffer = imageBuffer;
+    let imageWidth: number;
+    let imageHeight: number;
+
     if (angle !== 0) {
       const jimpModule = await import("jimp");
       const Jimp = jimpModule.default;
       const image = await Jimp.read(imageBuffer);
+      imageWidth = image.bitmap.width;
+      imageHeight = image.bitmap.height;
       const rotated = image.rotate(angle);
       processBuffer = await rotated.getBufferAsync(image.getMIME());
+    } else {
+      // Extract dimensions from original buffer when no rotation is applied
+      const jimpModule = await import("jimp");
+      const Jimp = jimpModule.default;
+      const image = await Jimp.read(imageBuffer);
+      imageWidth = image.bitmap.width;
+      imageHeight = image.bitmap.height;
     }
 
     // Run OCR with blocks output enabled
@@ -227,6 +319,8 @@ export class ServerOCRProcessor {
       rotationStrategy: angle === 0 ? "auto" : "manual",
       rotationCandidatesDegrees: [angle],
       rawTesseractResult: result.data,
+      imageWidth,
+      imageHeight,
     };
   }
 
@@ -235,9 +329,15 @@ export class ServerOCRProcessor {
    */
   async terminate(): Promise<void> {
     if (this.worker) {
-      await this.worker.terminate();
-      this.worker = null;
-      console.log("Server-side Tesseract worker terminated");
+      try {
+        await this.worker.terminate();
+        console.log("Server-side Tesseract worker terminated");
+      } catch (error) {
+        console.error("Error terminating Tesseract worker:", error);
+        // Continue with cleanup even if termination fails
+      } finally {
+        this.worker = null;
+      }
     }
   }
 
@@ -248,69 +348,171 @@ export class ServerOCRProcessor {
   /**
    * Extracts word-level data from Tesseract blocks hierarchy
    */
-  private extractWordsFromBlocks(blocks: unknown[]): TextBlock[] {
-    const words: TextBlock[] = [];
+  private extractWordsFromBlocks(blocks: Block[] | null): TextBlock[] {
+    if (!blocks) return [];
 
-    for (const block of blocks as Record<string, unknown>[]) {
-      if (!block.paragraphs) continue;
+    return blocks
+      .flatMap((block) => block.paragraphs)
+      .flatMap((paragraph) => paragraph.lines)
+      .flatMap((line) => line.words)
+      .filter((word) => word.text.trim().length > 0)
+      .filter((word) => word.confidence >= MIN_WORD_CONFIDENCE)
+      .map((word) => ({
+        text: word.text.trim(),
+        confidence: word.confidence,
+        bbox: word.bbox,
+      }));
+  }
 
-      for (const paragraph of block.paragraphs as Record<string, unknown>[]) {
-        if (!paragraph.lines) continue;
+  /**
+   * Calculates a robust score for orientation selection
+   * Uses weighted scoring: wordCount * (avgConfidence/100) + pattern validation bonus/penalty
+   */
+  private calculateOrientationScore(attempt: RotationAttempt): number {
+    const { wordCount, confidence, text, blocks } = attempt;
 
-        for (const line of paragraph.lines as Record<string, unknown>[]) {
-          if (!line.words) continue;
+    // Base weighted score: wordCount * (confidence/100)
+    const baseScore = wordCount * (confidence / 100);
 
-          for (const word of line.words as Record<string, unknown>[]) {
-            if (
-              !word.text ||
-              typeof word.text !== "string" ||
-              word.text.trim().length === 0
-            )
-              continue;
+    // Pattern validation bonus/penalty
+    const patternScore = this.calculatePatternScore(text, blocks);
 
-            const text = word.text.trim();
-            const confidence =
-              typeof word.confidence === "number" ? word.confidence : 0;
+    // Combine base score with pattern validation
+    const totalScore = baseScore + patternScore;
 
-            // Filter out low-confidence words
-            if (confidence < MIN_WORD_CONFIDENCE) continue;
+    console.log(
+      `Orientation ${attempt.angle}° score: base=${baseScore.toFixed(
+        2
+      )}, pattern=${patternScore.toFixed(2)}, total=${totalScore.toFixed(2)}`
+    );
 
-            words.push({
-              text,
-              confidence,
-              bbox: (word.bbox as {
-                x0: number;
-                y0: number;
-                x1: number;
-                y1: number;
-              }) || {
-                x0: 0,
-                y0: 0,
-                x1: 0,
-                y1: 0,
-              },
-            });
-          }
-        }
+    return totalScore;
+  }
+
+  /**
+   * Calculates pattern validation score based on text quality
+   * Boosts score for English/alphanumeric patterns, penalizes noise
+   */
+  private calculatePatternScore(text: string, blocks: TextBlock[]): number {
+    if (!text.trim() || blocks.length === 0) {
+      return 0;
+    }
+
+    const words = text.split(/\s+/).filter((word) => word.length > 0);
+    if (words.length === 0) {
+      return 0;
+    }
+
+    let validWordCount = 0;
+    let noiseCount = 0;
+
+    // Analyze each word for pattern quality
+    for (const word of words) {
+      const cleanWord = word.replace(/[^\w]/g, ""); // Remove punctuation
+
+      if (cleanWord.length === 0) {
+        continue;
+      }
+
+      // Check if word matches English/alphanumeric patterns
+      const isEnglishWord = /^[a-zA-Z]+$/.test(cleanWord);
+      const isAlphanumeric = /^[a-zA-Z0-9]+$/.test(cleanWord);
+      const isNumeric = /^[0-9]+$/.test(cleanWord);
+      const isPercentage = /^\d+%$/.test(word);
+      const isVolume = /^\d+(\.\d+)?\s*(ml|mL|oz|fl\.?\s*oz|L|l)$/i.test(word);
+
+      // Check for common OCR noise patterns
+      const isNoise =
+        /^[^a-zA-Z0-9]*$/.test(cleanWord) ||
+        /^[bcdefghjklmnopqrstuvwxyz]{1,2}$/i.test(cleanWord) || // Single/double consonants
+        /^[aeiou]{1,2}$/i.test(cleanWord); // Single/double vowels
+
+      if (
+        isEnglishWord ||
+        isAlphanumeric ||
+        isNumeric ||
+        isPercentage ||
+        isVolume
+      ) {
+        validWordCount++;
+      } else if (isNoise) {
+        noiseCount++;
       }
     }
 
-    return words;
+    // Calculate confidence-weighted pattern score
+    const validRatio = validWordCount / words.length;
+    const noiseRatio = noiseCount / words.length;
+
+    // Base pattern score: reward valid words, penalize noise
+    let patternScore = validRatio * 10 - noiseRatio * 5;
+
+    // Additional bonus for high-confidence valid words
+    const avgConfidence =
+      blocks.reduce((sum, block) => sum + (block.confidence || 0), 0) /
+      blocks.length;
+    if (validRatio > 0.7 && avgConfidence > 60) {
+      patternScore += 5; // Bonus for high-quality text
+    }
+
+    // Penalty for very low confidence
+    if (avgConfidence < 30) {
+      patternScore -= 10;
+    }
+
+    return Math.max(-10, Math.min(20, patternScore)); // Clamp between -10 and 20
   }
 }
 
 // Singleton instance for reuse across requests
 let serverOCRInstance: ServerOCRProcessor | null = null;
+// Promise to prevent race conditions during initialization
+let inFlightInit: Promise<ServerOCRProcessor> | null = null;
 
 /**
  * Get or create the server-side OCR processor instance
+ * Uses synchronization to prevent race conditions when called concurrently
  */
 export async function getServerOCRProcessor(): Promise<ServerOCRProcessor> {
-  if (!serverOCRInstance) {
-    serverOCRInstance = new ServerOCRProcessor();
-    await serverOCRInstance.initializeWorker();
+  // If instance already exists, return it immediately
+  if (serverOCRInstance) {
+    return serverOCRInstance;
   }
-  return serverOCRInstance;
+
+  // If initialization is already in progress, wait for it
+  if (inFlightInit) {
+    return inFlightInit;
+  }
+
+  // Start initialization and store the promise
+  inFlightInit = (async () => {
+    try {
+      const instance = new ServerOCRProcessor();
+      await instance.initializeWorker();
+
+      // Only assign to singleton after successful initialization
+      serverOCRInstance = instance;
+      return instance;
+    } catch (error) {
+      // Clear inFlightInit on failure so retries work
+      inFlightInit = null;
+      throw error;
+    } finally {
+      // Clear inFlightInit after completion (success or failure)
+      inFlightInit = null;
+    }
+  })();
+
+  return inFlightInit;
+}
+
+/**
+ * Reset singleton state (for testing purposes only)
+ * @internal
+ */
+export function resetServerOCRProcessor(): void {
+  serverOCRInstance = null;
+  inFlightInit = null;
 }
 
 /**

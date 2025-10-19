@@ -5,7 +5,7 @@
  * separated from worker initialization for easier testing.
  */
 
-import type { Worker } from "tesseract.js";
+import type { Worker, Block } from "tesseract.js";
 import type { OCRResult, TextBlock } from "@/types/verification";
 
 // Rotation angles to try (covers all 4 orientations)
@@ -44,17 +44,21 @@ export class OCRProcessor {
     const pipelineStart = Date.now();
 
     // Detect serverless environment for optimized processing
-    const isServerless = typeof process !== "undefined" && (
-      process.env.VERCEL ||
-      process.env.AWS_LAMBDA_FUNCTION_NAME ||
-      process.env.NETLIFY ||
-      process.env.RAILWAY_ENVIRONMENT ||
-      process.env.NODE_ENV === "production"
-    );
+    const isServerless =
+      typeof process !== "undefined" &&
+      (process.env.VERCEL ||
+        process.env.AWS_LAMBDA_FUNCTION_NAME ||
+        process.env.NETLIFY ||
+        process.env.RAILWAY_ENVIRONMENT ||
+        process.env.NODE_ENV === "production");
 
-    const rotationAngles = isServerless ? SERVERLESS_ROTATION_ANGLES : ROTATION_ANGLES;
-    
-    console.log(`Starting multi-rotation OCR processing... (${rotationAngles.length} rotations)`);
+    const rotationAngles = isServerless
+      ? SERVERLESS_ROTATION_ANGLES
+      : ROTATION_ANGLES;
+
+    console.log(
+      `Starting multi-rotation OCR processing... (${rotationAngles.length} rotations)`
+    );
 
     // Run OCR at selected rotations
     const attempts: RotationAttempt[] = [];
@@ -79,7 +83,11 @@ export class OCRProcessor {
       }
 
       // Run Tesseract OCR with blocks output enabled to get word-level data
-      const result = await worker.recognize(rotatedBuffer, {}, { blocks: true });
+      const result = await worker.recognize(
+        rotatedBuffer,
+        {},
+        { blocks: true }
+      );
 
       const text = result.data.text || "";
       const blocks = result.data.blocks || [];
@@ -99,7 +107,9 @@ export class OCRProcessor {
       });
 
       console.log(
-        `Rotation ${angle}° completed in ${Date.now() - attemptStart}ms (words=${words.length}, conf=${confidence.toFixed(1)}%)`
+        `Rotation ${angle}° completed in ${
+          Date.now() - attemptStart
+        }ms (words=${words.length}, conf=${confidence.toFixed(1)}%)`
       );
     }
 
@@ -126,11 +136,13 @@ export class OCRProcessor {
     const finalProcessingTime = Date.now() - pipelineStart;
 
     console.log(`Total OCR processing time: ${finalProcessingTime}ms`);
-    console.log(`Extracted ${allBlocks.length} words from ${attempts.length} rotations`);
+    console.log(
+      `Extracted ${allBlocks.length} words from ${attempts.length} rotations`
+    );
     console.log(`Primary orientation: ${primaryAttempt.angle}°`);
 
     // Store ALL rotation results for bbox matching (important for vertical text!)
-    const allRawResults = attempts.map(a => ({
+    const allRawResults = attempts.map((a) => ({
       angle: a.angle,
       result: a.rawResult,
     }));
@@ -161,15 +173,27 @@ export class OCRProcessor {
   ): Promise<OCRResult> {
     const startTime = Date.now();
 
-    // Rotate if needed
+    // Extract image dimensions and rotate if needed
     let processBuffer = imageBuffer;
+    let imageWidth: number;
+    let imageHeight: number;
+
     if (angle !== 0) {
       const jimpModule = await import("jimp");
       const Jimp = jimpModule.default;
       const image = await Jimp.read(imageBuffer);
+      imageWidth = image.bitmap.width;
+      imageHeight = image.bitmap.height;
       // Auto-resize canvas to prevent cropping
       const rotated = image.rotate(angle);
       processBuffer = await rotated.getBufferAsync(image.getMIME());
+    } else {
+      // Extract dimensions from original buffer when no rotation is applied
+      const jimpModule = await import("jimp");
+      const Jimp = jimpModule.default;
+      const image = await Jimp.read(imageBuffer);
+      imageWidth = image.bitmap.width;
+      imageHeight = image.bitmap.height;
     }
 
     // Run OCR with blocks output enabled
@@ -187,6 +211,8 @@ export class OCRProcessor {
       rotationStrategy: angle === 0 ? "auto" : "manual",
       rotationCandidatesDegrees: [angle],
       rawTesseractResult: result.data, // Include raw result for bbox matching
+      imageWidth,
+      imageHeight,
     };
   }
 
@@ -198,43 +224,19 @@ export class OCRProcessor {
    * Extracts word-level data from Tesseract blocks hierarchy
    * Blocks structure: page -> block -> paragraph -> line -> word
    */
-  private extractWordsFromBlocks(blocks: unknown[]): TextBlock[] {
-    const words: TextBlock[] = [];
+  private extractWordsFromBlocks(blocks: Block[] | null): TextBlock[] {
+    if (!blocks) return [];
 
-    for (const block of blocks as Record<string, unknown>[]) {
-      if (!block.paragraphs) continue;
-
-      for (const paragraph of block.paragraphs as Record<string, unknown>[]) {
-        if (!paragraph.lines) continue;
-
-        for (const line of paragraph.lines as Record<string, unknown>[]) {
-          if (!line.words) continue;
-
-          for (const word of line.words as Record<string, unknown>[]) {
-            if (!word.text || typeof word.text !== "string" || word.text.trim().length === 0)
-              continue;
-
-            const text = word.text.trim();
-            const confidence = typeof word.confidence === "number" ? word.confidence : 0;
-
-            // Filter out low-confidence words
-            if (confidence < MIN_WORD_CONFIDENCE) continue;
-
-            words.push({
-              text,
-              confidence,
-              bbox: (word.bbox as { x0: number; y0: number; x1: number; y1: number }) || {
-                x0: 0,
-                y0: 0,
-                x1: 0,
-                y1: 0,
-              },
-            });
-          }
-        }
-      }
-    }
-
-    return words;
+    return blocks
+      .flatMap((block) => block.paragraphs)
+      .flatMap((paragraph) => paragraph.lines)
+      .flatMap((line) => line.words)
+      .filter((word) => word.text.trim().length > 0)
+      .filter((word) => word.confidence >= MIN_WORD_CONFIDENCE)
+      .map((word) => ({
+        text: word.text.trim(),
+        confidence: word.confidence,
+        bbox: word.bbox,
+      }));
   }
 }

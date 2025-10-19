@@ -74,7 +74,7 @@ export function useHybridOCR(): UseHybridOCRReturn {
         setIsProcessing(false);
       }
     },
-    [clientOCR]
+    [clientOCR.processImage]
   );
 
   return {
