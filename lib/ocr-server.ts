@@ -71,7 +71,18 @@ export class ServerOCRProcessor {
         workerConfig.workerPath = "./node_modules/tesseract.js/src/worker-script/node/index.js";
       }
       
-      this.worker = await createWorker("eng", 1, workerConfig);
+      // Fallback: if explicit paths fail, let Tesseract.js auto-detect
+      try {
+        this.worker = await createWorker("eng", 1, workerConfig);
+      } catch (pathError) {
+        console.warn("Failed with explicit paths, falling back to auto-detection:", pathError);
+        // Remove explicit paths and let Tesseract.js handle everything
+        const autoConfig = {
+          gzip: false,
+          logger: workerConfig.logger,
+        };
+        this.worker = await createWorker("eng", 1, autoConfig);
+      }
 
       // Configure for better label recognition
       await this.worker.setParameters({
