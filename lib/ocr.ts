@@ -42,30 +42,38 @@ export async function createTesseractWorker() {
 
   try {
     if (isServerless) {
-      // For serverless environments, use CDN to avoid WASM file issues
+      // For serverless environments, use local bundled files with proper paths
       console.log(
-        "Creating Tesseract worker for serverless environment using CDN"
+        "Creating Tesseract worker for serverless environment using local bundled files"
       );
 
       try {
-        // Use CDN for all assets to avoid local file issues in serverless
+        // Use absolute paths to bundled files that should be available in serverless
+        const baseDir = resolve(process.cwd(), "public", "tesseract-bundled");
         worker = await createWorker("eng", 1, {
-          workerPath: "https://unpkg.com/tesseract.js@5.0.4/dist/worker.min.js",
-          corePath:
-            "https://unpkg.com/tesseract.js-core@5.0.0/tesseract-core-simd.wasm.js",
-          langPath: "https://tessdata.projectnaptha.com/5.0.0",
+          workerPath: resolve(baseDir, "worker.min.js"),
+          corePath: resolve(baseDir, "tesseract-core-simd.wasm.js"),
+          langPath: resolve(baseDir, "traineddata"),
           gzip: false,
         });
-        console.log("Successfully created worker using CDN");
-      } catch (cdnError) {
-        console.warn("CDN failed, trying default configuration:", cdnError);
-        // Fallback to default (may not work but at least won't crash)
-        worker = await createWorker("eng", 1, {
-          gzip: false,
-        });
-        console.log(
-          "Successfully created worker using default configuration (fallback)"
+        console.log("Successfully created worker using local bundled files");
+      } catch (localError) {
+        console.warn(
+          "Local files failed, trying default configuration:",
+          localError
         );
+        // Fallback to default configuration
+        try {
+          worker = await createWorker("eng", 1, {
+            gzip: false,
+          });
+          console.log(
+            "Successfully created worker using default configuration (fallback)"
+          );
+        } catch (defaultError) {
+          console.error("All Tesseract configurations failed:", defaultError);
+          throw defaultError;
+        }
       }
     } else if (isNode) {
       // Local development and testing

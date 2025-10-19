@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
 
     return config;
   },
-  // Ensure WASM files are served with correct MIME type
+  // Ensure WASM files are served with correct MIME type and included in serverless bundle
   async headers() {
     return [
       {
@@ -34,6 +34,11 @@ const nextConfig: NextConfig = {
         ],
       },
     ];
+  },
+  // Include Tesseract assets in serverless functions
+  outputFileTracingIncludes: {
+    "/api/verify": ["public/tesseract-bundled/**/*"],
+    "/api/verify-server": ["public/tesseract-bundled/**/*"],
   },
 };
 
