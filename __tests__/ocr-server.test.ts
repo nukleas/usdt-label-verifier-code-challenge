@@ -6,7 +6,7 @@ import {
   ServerOCRProcessor,
   getServerOCRProcessor,
   resetServerOCRProcessor,
-} from "../../lib/ocr-server";
+} from "../lib/ocr-server";
 
 describe("ServerOCRProcessor Orientation Selection", () => {
   let processor: ServerOCRProcessor;

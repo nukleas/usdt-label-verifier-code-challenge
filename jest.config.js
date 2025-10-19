@@ -13,6 +13,7 @@ const customJestConfig = {
     "<rootDir>/.next/",
     "<rootDir>/node_modules/",
     "<rootDir>/tests/",
+    "<rootDir>/__tests__/e2e-*.spec.ts",
   ],
   testMatch: [
     "**/__tests__/**/*.(test|spec).(js|jsx|ts|tsx)",

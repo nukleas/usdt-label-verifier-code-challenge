@@ -4,7 +4,7 @@
  * Tests form validation logic
  */
 
-import { validateFormData } from "../../lib/validation";
+import { validateFormData } from "../lib/validation";
 
 describe("Form Validation", () => {
   describe("validateFormData", () => {

@@ -9,8 +9,8 @@ import {
   findPatternBBoxes,
   mergeBBoxes,
   deduplicateBBoxes,
-} from "../../lib/bboxMatching";
-import type { BoundingBox } from "../../types/verification";
+} from "../lib/bboxMatching";
+import type { BoundingBox } from "../types/verification";
 
 describe("BBox Matching Utilities", () => {
   describe("mergeBBoxes", () => {

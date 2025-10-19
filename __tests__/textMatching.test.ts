@@ -12,7 +12,7 @@ import {
   matchGovernmentWarning,
   normalizeText,
   calculateSimilarity,
-} from "../../lib/textMatching";
+} from "../lib/textMatching";
 
 describe("Text Matching Utilities", () => {
   describe("normalizeText", () => {
