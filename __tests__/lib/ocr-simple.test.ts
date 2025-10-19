@@ -18,6 +18,7 @@ describe("OCR Integration (Manual Test)", () => {
     // Verify the test image exists
     expect(() => readFileSync(imagePath)).not.toThrow();
 
+    // Test instructions for manual verification
     console.log("\n" + "=".repeat(70));
     console.log("MANUAL TEST INSTRUCTIONS FOR ORPHEUS LABEL");
     console.log("=".repeat(70));
@@ -35,8 +36,10 @@ describe("OCR Integration (Manual Test)", () => {
     console.log("   ✓ Alcohol content '4%' found");
     console.log("   ✓ Net contents '12 fl oz' found");
     console.log("   ✓ Government warning found (from rotated text)");
-    console.log("\n7. Check debug accordion:");
-    console.log("   - Should show words from all 4 rotations (0°, 90°, 180°, 270°)");
+    console.log("\n7. Check detailed results:");
+    console.log(
+      "   - Should show words from all 4 rotations (0°, 90°, 180°, 270°)"
+    );
     console.log("   - Should highlight 'ALC', 'VOL', 'WARNING' keywords");
     console.log("\n" + "=".repeat(70) + "\n");
   });

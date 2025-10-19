@@ -7,21 +7,13 @@
 
 import { createWorker, type Worker, type Block } from "tesseract.js";
 import type { OCRResult, TextBlock } from "../types/verification";
+import type { RotationAttempt } from "./ocr-core";
 
 // Rotation angles to try (covers all 4 orientations)
 const ROTATION_ANGLES = [0, 90, 180, 270] as const;
 
 // Minimum confidence threshold for including words (0-100)
 const MIN_WORD_CONFIDENCE = 60;
-
-interface RotationAttempt {
-  angle: number;
-  text: string;
-  blocks: TextBlock[];
-  confidence: number;
-  wordCount: number;
-  rawResult?: unknown;
-}
 
 /**
  * Server-Side OCR Processor
@@ -36,7 +28,7 @@ export class ServerOCRProcessor {
    * Initialize the Tesseract worker for server-side processing
    */
   async initializeWorker(): Promise<void> {
-    console.log("Initializing server-side Tesseract worker...");
+    // Initialize Tesseract worker
 
     try {
       // Use local installation - we have tesseract.js installed via npm
@@ -66,11 +58,11 @@ export class ServerOCRProcessor {
         preserve_interword_spaces: "1",
       } as Record<string, string>);
 
-      console.log("Server-side Tesseract worker initialized successfully");
+      // Worker initialized successfully
     } catch (error) {
       console.error("Failed to initialize Tesseract worker:", error);
 
-      // Log detailed error information for debugging
+      // Log detailed error information
       if (error instanceof Error) {
         console.error("Error name:", error.name);
         console.error("Error message:", error.message);
@@ -203,13 +195,7 @@ export class ServerOCRProcessor {
 
     const finalProcessingTime = Date.now() - pipelineStart;
 
-    console.log(
-      `Total server-side OCR processing time: ${finalProcessingTime}ms`
-    );
-    console.log(
-      `Extracted ${allBlocks.length} words from ${attempts.length} rotations`
-    );
-    console.log(`Primary orientation: ${primaryAttempt.angle}°`);
+    // OCR processing completed
 
     // Store ALL rotation results for bbox matching
     const allRawResults = attempts.map((a) => ({
@@ -302,7 +288,7 @@ export class ServerOCRProcessor {
     if (this.worker) {
       try {
         await this.worker.terminate();
-        console.log("Server-side Tesseract worker terminated");
+        // Worker terminated
       } catch (error) {
         console.error("Error terminating Tesseract worker:", error);
         // Continue with cleanup even if termination fails

@@ -17,7 +17,7 @@ const SERVERLESS_ROTATION_ANGLES = [0, 90] as const;
 // Minimum confidence threshold for including words (0-100)
 const MIN_WORD_CONFIDENCE = 60;
 
-interface RotationAttempt {
+export interface RotationAttempt {
   angle: number;
   text: string;
   blocks: TextBlock[];
@@ -135,11 +135,7 @@ export class OCRProcessor {
 
     const finalProcessingTime = Date.now() - pipelineStart;
 
-    console.log(`Total OCR processing time: ${finalProcessingTime}ms`);
-    console.log(
-      `Extracted ${allBlocks.length} words from ${attempts.length} rotations`
-    );
-    console.log(`Primary orientation: ${primaryAttempt.angle}°`);
+    // OCR processing completed
 
     // Store ALL rotation results for bbox matching (important for vertical text!)
     const allRawResults = attempts.map((a) => ({

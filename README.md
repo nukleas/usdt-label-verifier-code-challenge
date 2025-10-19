@@ -16,6 +16,7 @@ This application simulates a simplified version of the **Alcohol and Tobacco Tax
 ## Features
 
 ### Core Features (Required)
+
 ✅ **Form Input:** USWDS-compliant form for entering label information
 ✅ **Image Upload:** Drag-and-drop or file selection with preview
 ✅ **OCR Processing:** Tesseract.js for server-side text extraction
@@ -25,6 +26,7 @@ This application simulates a simplified version of the **Alcohol and Tobacco Tax
 ✅ **Error Handling:** Graceful handling of unreadable images, missing fields
 
 ### Bonus Features (Extras)
+
 🌟 **Multi-Rotation OCR:** Automatically tries 0°, 90°, 180°, 270° rotations to detect vertical/sideways text
 🌟 **Bounding Box Highlighting:** Visual canvas overlay showing where each field was detected on the label
 🌟 **Word-Level Analysis:** Enhanced alcohol content matching using word-level confidence scores
@@ -37,6 +39,7 @@ This application simulates a simplified version of the **Alcohol and Tobacco Tax
 ## Technology Stack
 
 ### Frontend
+
 - **Framework:** Next.js 15 (App Router)
 - **Language:** TypeScript 5
 - **UI Library:** US Web Design System (USWDS) 3.13
@@ -44,11 +47,13 @@ This application simulates a simplified version of the **Alcohol and Tobacco Tax
 - **Styling:** SASS with USWDS design tokens
 
 ### Backend
+
 - **Runtime:** Next.js API Routes (Node.js)
 - **OCR Engine:** Tesseract.js 6.0
 - **Image Processing:** Browser File API + FormData
 
 ### Deployment
+
 - **Platform:** Vercel (recommended)
 - **CI/CD:** Automatic deployments via Git
 
@@ -83,11 +88,11 @@ atf-app/
 │   └── labels/             # Sample test images
 ├── types/
 │   └── verification.ts     # TypeScript definitions
-├── plan/                   # Technical documentation
-│   ├── implementation-plan.md
-│   ├── architecture.md
-│   ├── api-design.md
-│   └── matching-logic.md
+├── docs/                   # Documentation
+│   ├── alcohol-type-requirements.md
+│   ├── project-requirements.md
+│   ├── project-alignment-analysis.md
+│   └── ds-labeling-checklist.pdf
 └── public/                 # Static assets
 ```
 
@@ -147,6 +152,7 @@ Click "Get Started" on the landing page or go directly to `/verify`
 ### 2. Enter Label Information
 
 Fill in the form with information from your alcohol label:
+
 - **Brand Name** (required): e.g., "Old Tom Distillery"
 - **Product Type** (required): e.g., "Kentucky Straight Bourbon Whiskey"
 - **Alcohol Content** (required): e.g., "45" or "45%"
@@ -162,6 +168,7 @@ Fill in the form with information from your alcohol label:
 ### 4. Verify Label
 
 Click "Verify Label" button. The system will:
+
 1. Validate your inputs
 2. Process the image with OCR
 3. Extract text from the label
@@ -171,6 +178,7 @@ Click "Verify Label" button. The system will:
 ### 5. Review Results
 
 Check the verification results:
+
 - ✓ **Match:** Field matches label (green)
 - ✗ **Mismatch:** Field doesn't match (red)
 - ⚠ **Not Found:** Field not detected on label (yellow)
@@ -193,26 +201,31 @@ The application uses **Tesseract.js** with **multi-rotation processing** (bonus 
 The system uses multiple strategies to match form data with OCR text:
 
 #### 1. Brand Name Matching
+
 - **Exact match:** Case-insensitive substring search
 - **Fuzzy match:** Levenshtein distance (80% threshold)
 - **Word matching:** At least 75% of words must match
 
 #### 2. Product Type Matching
+
 - **Substring match:** Handles variations like "Bourbon" vs "Bourbon Whiskey"
 - **Product variations:** Recognizes common synonyms (IPA, India Pale Ale, etc.)
 - **Fuzzy match:** 70% similarity threshold
 
 #### 3. Alcohol Content Matching
+
 - **Pattern extraction:** Finds "45%", "45 Alc./Vol.", "90 Proof"
 - **Proof conversion:** Automatically converts proof to ABV (Proof / 2)
 - **Tolerance:** ±0.5% for exact match, ±2% for loose match
 
 #### 4. Net Contents Matching
+
 - **Unit conversion:** Converts mL, oz, L to common unit
 - **Volume tolerance:** 2% variance allowed
 - **Format flexibility:** Handles "750ml", "750 mL", "750 ML"
 
 #### 5. Government Warning Detection (Bonus)
+
 - Checks for required phrases: "GOVERNMENT WARNING", "Surgeon General", etc.
 - At least 60% of key phrases must be present
 - Partial matches flagged as warnings
@@ -224,6 +237,7 @@ The system uses multiple strategies to match form data with OCR text:
 Verifies an alcohol label against form data.
 
 **Request:**
+
 - Method: `POST`
 - Content-Type: `multipart/form-data`
 
@@ -282,18 +296,18 @@ Adjust matching sensitivity in `/lib/constants.ts`:
 ```typescript
 export const DEFAULT_MATCHING_CONFIG = {
   brandName: {
-    fuzzyMatchThreshold: 80,    // 80% similarity
-    wordMatchThreshold: 75,     // 75% of words must match
+    fuzzyMatchThreshold: 80, // 80% similarity
+    wordMatchThreshold: 75, // 75% of words must match
   },
   productType: {
-    fuzzyMatchThreshold: 70,    // 70% similarity
+    fuzzyMatchThreshold: 70, // 70% similarity
   },
   alcoholContent: {
-    exactTolerance: 0.5,        // ±0.5%
-    looseTolerance: 2.0,        // ±2.0%
+    exactTolerance: 0.5, // ±0.5%
+    looseTolerance: 2.0, // ±2.0%
   },
   netContents: {
-    volumeTolerance: 0.02,      // 2%
+    volumeTolerance: 0.02, // 2%
   },
 };
 ```
@@ -304,9 +318,9 @@ Modify Tesseract configuration in `/lib/constants.ts`:
 
 ```typescript
 export const DEFAULT_OCR_CONFIG = {
-  language: "eng",              // English
-  oem: 3,                       // Default OCR engine mode
-  psm: 3,                       // Automatic page segmentation
+  language: "eng", // English
+  oem: 3, // Default OCR engine mode
+  psm: 3, // Automatic page segmentation
   preserveInterwordSpaces: true,
 };
 ```
@@ -314,7 +328,9 @@ export const DEFAULT_OCR_CONFIG = {
 ## Key Implementation Details
 
 ### Bonus Feature: Multi-Rotation OCR
+
 To handle **vertical or sideways text** (common on labels, especially government warnings):
+
 - OCR processes image at 4 orientations: 0°, 90°, 180°, 270°
 - Selects rotation with highest word confidence as primary
 - Keeps all rotation results for cross-orientation text detection (e.g., vertical warning on side)
@@ -322,6 +338,7 @@ To handle **vertical or sideways text** (common on labels, especially government
 - Enables detection of text in any orientation on a single label
 
 ### Bonus Feature: Bounding Box Visual Highlighting
+
 - Tesseract provides word-level bounding boxes (x0, y0, x1, y1 coordinates)
 - System traverses Tesseract's tree structure (blocks → paragraphs → lines → words)
 - Matches text patterns and extracts corresponding bounding boxes
@@ -331,29 +348,35 @@ To handle **vertical or sideways text** (common on labels, especially government
 ## Design Decisions
 
 ### Why Next.js App Router?
+
 - **Server Components:** Reduced client bundle size
 - **API Routes:** Built-in backend without separate server
 - **File-based Routing:** Intuitive project structure
 - **Vercel Optimized:** Best deployment experience
 
 ### Why Server-Side OCR?
+
 ✅ **Pros:**
+
 - Smaller client bundle (Tesseract not in browser)
 - Better performance using server CPU
 - Consistent Node.js environment
 - No CORS issues
 
 ❌ **Cons:**
+
 - Slight network latency (acceptable)
 - Server resource usage (minimal for expected load)
 
 ### Why USWDS?
+
 - **Government Standard:** Professional, trustworthy appearance
 - **Accessibility:** WCAG 2.1 AA compliant by default
 - **Design Tokens:** Consistent theming system
 - **Mobile-First:** Responsive out of the box
 
 ### Why Tesseract.js?
+
 - **Free & Open Source:** No API costs
 - **JavaScript Native:** Works in Node.js
 - **Good Accuracy:** Sufficient for printed labels
@@ -370,6 +393,7 @@ pnpm test:coverage # Coverage report
 ```
 
 **Test Suite:** 76 passing tests covering:
+
 - Text matching algorithms (exact, fuzzy, pattern-based)
 - Bounding box detection and merging
 - Form validation
@@ -379,6 +403,7 @@ pnpm test:coverage # Coverage report
 ### Test Label Images
 
 Sample test images are included in `__tests__/labels/`:
+
 1. **ABC Distillery Straight Rye Whisky** - Front/back label with government warning
 2. **12345 Imports Rum with Coconut Liqueur** - Import label test case
 3. **Orpheus Brewing Pineapple Sour Ale** - Beer label with vertical text (tests rotation detection)
@@ -395,11 +420,13 @@ git push origin main
 ```
 
 2. **Import to Vercel**
+
 - Go to [vercel.com/new](https://vercel.com/new)
 - Import your repository
 - Click "Deploy"
 
 3. **Configure Settings** (if needed)
+
 - Framework: Next.js
 - Build Command: `pnpm build`
 - Output Directory: `.next`
@@ -409,6 +436,7 @@ git push origin main
 ### Deploy to Other Platforms
 
 The app can also be deployed to:
+
 - **Netlify:** Add Next.js plugin
 - **Railway:** Connect GitHub repo
 - **AWS Amplify:** Use Amplify Console
@@ -417,6 +445,7 @@ The app can also be deployed to:
 ## Assumptions & Limitations
 
 ### Assumptions
+
 - Images are reasonably clear and well-lit
 - English text only (Tesseract configured for English)
 - Common image formats (JPEG, PNG, WebP)
@@ -425,6 +454,7 @@ The app can also be deployed to:
 - No user authentication required
 
 ### Known Limitations
+
 - OCR accuracy depends on image quality (tested with clear, well-lit labels)
 - Does not handle multiple languages (English only)
 - No batch processing (one label at a time)
@@ -432,6 +462,7 @@ The app can also be deployed to:
 - Maximum image size: 5 MB
 
 ### Future Enhancements (If More Time)
+
 - [ ] Image preprocessing (contrast enhancement, de-skewing)
 - [ ] Support for multiple product types with conditional field validation (Beer, Wine, Spirits)
 - [ ] Exact government warning text validation (currently checks key phrases only)
@@ -452,12 +483,12 @@ This is a take-home project for demonstration purposes. If you'd like to extend 
 
 ## Technical Documentation
 
-Detailed technical documentation is available in the `/plan` directory:
+Detailed technical documentation is available in the `/docs` directory:
 
-- **[Implementation Plan](./plan/implementation-plan.md):** Development timeline and phases
-- **[Architecture](./plan/architecture.md):** System design and data flow
-- **[API Design](./plan/api-design.md):** API specifications and examples
-- **[Matching Logic](./plan/matching-logic.md):** Algorithm details and test cases
+- **[Project Requirements](./docs/project-requirements.md):** Original project specifications and requirements
+- **[Alcohol Type Requirements](./docs/alcohol-type-requirements.md):** TTB labeling requirements by alcohol type
+- **[Project Alignment Analysis](./docs/project-alignment-analysis.md):** Implementation analysis against requirements
+- **[DS Labeling Checklist](./docs/ds-labeling-checklist.pdf):** TTB labeling checklist reference
 
 ## License
 
@@ -474,8 +505,9 @@ This project is created for educational and demonstration purposes.
 ## Support
 
 For questions or issues:
+
 - Open an issue on GitHub
-- Check the [technical documentation](./plan)
+- Check the [technical documentation](./docs)
 - Review the [TTB guidelines](https://www.ttb.gov)
 
 ---

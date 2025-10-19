@@ -28,7 +28,7 @@ export function useClientOCR(): UseClientOCRReturn {
       setError(null);
 
       try {
-        console.log("Starting client-side multi-rotation OCR processing...");
+        // Starting OCR processing
 
         // Create Tesseract worker with local bundled files
         setProgress(0.1);
@@ -216,9 +216,7 @@ export function useClientOCR(): UseClientOCRReturn {
           rotationAppliedRadians,
         };
 
-        console.log(
-          `Client-side OCR completed. Best rotation: ${best.angle}°, Confidence: ${best.confidence}%`
-        );
+        // OCR processing completed
 
         return ocrResult;
       } catch (err) {

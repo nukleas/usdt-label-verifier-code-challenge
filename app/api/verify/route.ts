@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       const netContents = (formData.get("netContents") as string) || undefined;
       const imageFile = formData.get("label-image") as File;
 
-      // Debug: Log the form data
+      // Log form data for monitoring
       console.log("Form data received:", {
         brandName,
         alcoholType,
@@ -63,10 +63,7 @@ export async function POST(request: NextRequest) {
         image: imageFile,
       });
 
-      console.log("Validation result:", validation);
-
       if (!validation.valid) {
-        console.log("Validation failed:", validation.errors);
         return NextResponse.json(
           {
             success: false,
@@ -81,9 +78,7 @@ export async function POST(request: NextRequest) {
       const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
 
       // Process with OCR
-      console.log("Starting OCR processing...");
       ocrResult = await processImageServerSide(imageBuffer);
-      console.log(`OCR completed. Confidence: ${ocrResult.confidence}%`);
 
       // Build form data object
       labelData = {
@@ -166,7 +161,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Compare fields (pass full OCR result for block-aware matching)
-    console.log("Starting field comparison...");
     const verificationResult = compareFields(labelData, ocrResult);
 
     // Add metadata
@@ -189,10 +183,6 @@ export async function POST(request: NextRequest) {
     if (ocrResult.confidence < 70) {
       verificationResult.warnings = [ERROR_MESSAGES.LOW_CONFIDENCE];
     }
-
-    console.log(
-      `Verification completed in ${verificationResult.processingTime}ms`
-    );
 
     return NextResponse.json({
       success: true,

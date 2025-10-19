@@ -37,10 +37,10 @@ export default function VerificationResults({
 
     const strategyLabel =
       rotation.strategy === "manual"
-        ? "fallback rotation"
+        ? "manual adjustment"
         : rotation.strategy === "auto"
-        ? "auto alignment"
-        : "no rotation";
+        ? "automatic detection"
+        : "no adjustment";
 
     const candidates =
       rotation.candidatesDegrees && rotation.candidatesDegrees.length > 0
@@ -53,10 +53,10 @@ export default function VerificationResults({
         : "";
 
     if (normalized === 0) {
-      return `no rotation needed via ${strategyLabel}${candidatesText}`;
+      return `no adjustment needed (${strategyLabel})${candidatesText}`;
     }
 
-    return `${normalized}° via ${strategyLabel}${candidatesText}`;
+    return `${normalized}° ${strategyLabel}${candidatesText}`;
   };
 
   const rotationDescription = ocrRotation
@@ -102,7 +102,7 @@ export default function VerificationResults({
           <>
             <br />
             <span className="text-base margin-top-05">
-              Orientation normalization: {rotationDescription}
+              Image processing: {rotationDescription}
             </span>
           </>
         )}
@@ -177,10 +177,9 @@ export default function VerificationResults({
                         Detected Words ({ocrBlocks.length} words):
                       </h5>
                       <p className="font-sans-3xs text-base-dark margin-top-05">
-                        Shows individual words extracted by OCR with confidence
-                        scores and locations. Highlight keywords like
-                        &ldquo;ALC&rdquo;, &ldquo;VOL&rdquo;, &ldquo;ABV&rdquo;
-                        are used for matching.
+                        Individual words extracted from the label with
+                        confidence scores and locations. Keywords are
+                        highlighted for verification matching.
                       </p>
                       <div
                         className="usa-table-container--scrollable margin-top-2"

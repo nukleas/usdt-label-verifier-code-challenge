@@ -436,27 +436,6 @@ export enum VerificationField {
   GOVERNMENT_WARNING = "governmentWarning",
 }
 
-/**
- * Valid image MIME types
- */
-export const VALID_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-] as const;
+import { VALID_IMAGE_TYPES } from "../lib/constants";
 
 export type ValidImageType = (typeof VALID_IMAGE_TYPES)[number];
-
-/**
- * Maximum file size (5 MB)
- */
-export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB in bytes
-
-/**
- * Valid ABV range
- */
-export const ABV_RANGE = {
-  min: 0.5,
-  max: 95,
-} as const;
