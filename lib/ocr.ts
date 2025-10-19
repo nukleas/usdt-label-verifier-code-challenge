@@ -12,7 +12,6 @@
  */
 
 import { createWorker } from "tesseract.js";
-import { resolve } from "path";
 import type { OCRResult } from "@/types/verification";
 import { ERROR_MESSAGES } from "./constants";
 import { OCRProcessor } from "./ocr-core";
@@ -22,112 +21,61 @@ import { OCRProcessor } from "./ocr-core";
 // ============================================================================
 
 /**
- * Creates a Tesseract worker with appropriate paths for the environment
+ * Creates a Tesseract worker optimized for Node.js serverless environments
+ * Uses the actual installed tesseract.js packages with proper path resolution
  */
 export async function createTesseractWorker() {
+  console.log("Creating Tesseract worker for Node.js environment...");
+
   // Detect if running in Node.js (API routes, tests) vs browser
   const isNode =
     typeof process !== "undefined" && process.versions && process.versions.node;
 
-  // Detect if running in serverless environment (Vercel, AWS Lambda, etc.)
-  const isServerless =
-    isNode &&
-    (process.env.VERCEL ||
-      process.env.AWS_LAMBDA_FUNCTION_NAME ||
-      process.env.NETLIFY ||
-      process.env.RAILWAY_ENVIRONMENT ||
-      process.env.NODE_ENV === "production");
-
-  let worker;
-
-  try {
-    if (isServerless) {
-      // For serverless environments, point explicitly to bundled assets included via outputFileTracingIncludes
-      console.log(
-        "Creating Tesseract worker for serverless environment using bundled assets"
+  if (isNode) {
+    // For Node.js environments, use the actual installed packages
+    try {
+      // Resolve path to the actual installed worker script
+      const workerPath = require.resolve(
+        "tesseract.js/src/worker-script/node/index.js"
       );
 
-      const bundledBase = resolve(process.cwd(), "public/tesseract-bundled");
+      console.log("Using Node.js worker:", workerPath);
 
-      // Resolve Node worker script absolutely; Next keeps these deps external on the server
-      let nodeWorkerPath: string | undefined;
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        nodeWorkerPath = require.resolve(
-          "tesseract.js/src/worker-script/node/index.js"
-        );
-      } catch (e) {
-        console.warn(
-          "Failed to resolve node worker script via require.resolve",
-          e
-        );
-      }
-
-      // Try SIMD core first, then fall back to LSTM
-      const coreSimdPath = resolve(bundledBase, "tesseract-core-simd.wasm.js");
-      const coreLstmPath = resolve(bundledBase, "tesseract-core-lstm.wasm.js");
-      const langPath = resolve(bundledBase, "traineddata");
-
-      try {
-        worker = await createWorker("eng", 1, {
-          workerPath: nodeWorkerPath,
-          corePath: coreSimdPath,
-          langPath,
-          gzip: false,
-        });
-        console.log("Worker initialized with SIMD core");
-      } catch (simdError) {
-        console.warn("SIMD core failed, falling back to LSTM core", simdError);
-        try {
-          worker = await createWorker("eng", 1, {
-            workerPath: nodeWorkerPath,
-            corePath: coreLstmPath,
-            langPath,
-            gzip: false,
-          });
-          console.log("Worker initialized with LSTM core (fallback)");
-        } catch (lstmError) {
-          console.error("Bundled core paths failed:", lstmError);
-          // Final fallback: let tesseract.js attempt auto-detection
-          worker = await createWorker("eng", 1, { gzip: false });
-        }
-      }
-    } else if (isNode) {
-      // Local development and testing
-      console.log("Creating Tesseract worker for local Node.js environment");
-      worker = await createWorker("eng", 1, {
-        workerPath: resolve(
-          process.cwd(),
-          "node_modules/tesseract.js/src/worker-script/node/index.js"
-        ),
-        langPath: resolve(process.cwd(), "public/tesseract"),
+      const worker = await createWorker("eng", 1, {
+        workerPath,
         gzip: false,
       });
-    } else {
-      // Browser environment
-      console.log("Creating Tesseract worker for browser environment");
-      worker = await createWorker("eng", 1, {
-        workerPath: "/tesseract/worker.min.js",
-        corePath: "/tesseract/tesseract-core-lstm.wasm.js",
-        langPath: "/tesseract",
-        gzip: false,
-      });
+
+      // Configure Tesseract for better accuracy on alcohol labels
+      await worker.setParameters({
+        tessedit_pageseg_mode: "3", // PSM 3: Fully automatic page segmentation
+        preserve_interword_spaces: "1", // Preserve spaces between words
+      } as Record<string, string>);
+
+      console.log("Tesseract worker created successfully with Node.js paths");
+      return worker;
+    } catch (error) {
+      console.warn(
+        "Failed to create worker with Node.js paths, falling back to auto-detection:",
+        error
+      );
+      // Fallback to auto-detection
     }
-  } catch (error) {
-    console.warn(
-      "Failed to create worker with custom paths, falling back to default:",
-      error
-    );
-    // Fallback: let Tesseract.js handle everything automatically
-    worker = await createWorker("eng", 1);
   }
+
+  // Fallback: let Tesseract.js handle everything automatically
+  console.log("Using Tesseract.js auto-detection...");
+  const worker = await createWorker("eng", 1, {
+    gzip: false,
+  });
 
   // Configure Tesseract for better accuracy on alcohol labels
   await worker.setParameters({
-    tessedit_pageseg_mode: "3", // PSM 3: Fully automatic page segmentation (default, works well for mixed content)
+    tessedit_pageseg_mode: "3", // PSM 3: Fully automatic page segmentation
     preserve_interword_spaces: "1", // Preserve spaces between words
   } as Record<string, string>);
 
+  console.log("Tesseract worker created successfully with auto-detection");
   return worker;
 }
 

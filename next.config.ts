@@ -17,29 +17,6 @@ const nextConfig: NextConfig = {
 
     return config;
   },
-  // Ensure WASM files are served with correct MIME type and included in serverless bundle
-  async headers() {
-    return [
-      {
-        source: "/tesseract-bundled/:path*",
-        headers: [
-          {
-            key: "Cross-Origin-Embedder-Policy",
-            value: "require-corp",
-          },
-          {
-            key: "Cross-Origin-Opener-Policy",
-            value: "same-origin",
-          },
-        ],
-      },
-    ];
-  },
-  // Include Tesseract assets in serverless functions
-  outputFileTracingIncludes: {
-    "/api/verify": ["public/tesseract-bundled/**/*"],
-    "/api/verify-server": ["public/tesseract-bundled/**/*"],
-  },
 };
 
 export default nextConfig;
