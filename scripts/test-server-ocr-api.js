@@ -7,6 +7,10 @@
 import fs from "fs";
 import path from "path";
 import FormData from "form-data";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function testServerOCRAPI() {
   try {
@@ -94,7 +98,7 @@ async function testServerOCRAPI() {
 }
 
 // Run test if this file is executed directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   testServerOCRAPI();
 }
 

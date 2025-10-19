@@ -20,6 +20,7 @@
   "dependencies": {
     "@trussworks/react-uswds": "^10.0.2",
     "@uswds/uswds": "^3.13.0",
+    "form-data": "^4.0.4",
     "jimp": "^0.22.12",
     "next": "15.5.6",
     "react": "19.1.0",

@@ -39,55 +39,17 @@ export class ServerOCRProcessor {
     console.log("Initializing server-side Tesseract worker...");
 
     try {
-      // Resolve paths robustly - let tesseract.js auto-detect or use environment config
-      const workerConfig: {
-        workerPath?: string;
-        corePath?: string;
-        logger: (m: { status?: string; progress?: number }) => void;
-      } = {
-        logger: (m: { status?: string; progress?: number }) => {
-          if (m.status === "recognizing text") {
-            console.log(
-              `OCR Progress: ${Math.round((m.progress || 0) * 100)}%`
-            );
-          } else if (m.status) {
-            console.log(`OCR Status: ${m.status}`);
-          }
-        },
-      };
+      // Use the same approach as our working ocr.ts
+      const workerPath = require.resolve(
+        "tesseract.js/src/worker-script/node/index.js"
+      );
 
-      // Only set explicit paths if environment variables are provided
-      // Otherwise let tesseract.js auto-detect the correct paths
-      if (process.env.TESSERACT_WORKER_PATH) {
-        workerConfig.workerPath = process.env.TESSERACT_WORKER_PATH;
-      }
-      if (process.env.TESSERACT_CORE_PATH) {
-        workerConfig.corePath = process.env.TESSERACT_CORE_PATH;
-      }
+      console.log("Using Node.js worker:", workerPath);
 
-      // If no environment paths, try to resolve using require.resolve as fallback
-      if (
-        !process.env.TESSERACT_WORKER_PATH &&
-        !process.env.TESSERACT_CORE_PATH
-      ) {
-        try {
-          // Try to resolve tesseract.js paths dynamically
-          const tesseractWorkerPath = require.resolve(
-            "tesseract.js/src/worker-script/node/index.js"
-          );
-          const tesseractCorePath = require.resolve("tesseract.js-core");
-          workerConfig.workerPath = tesseractWorkerPath;
-          workerConfig.corePath = tesseractCorePath;
-          console.log("Resolved Tesseract paths using require.resolve");
-        } catch {
-          console.log(
-            "Could not resolve Tesseract paths, letting tesseract.js auto-detect"
-          );
-          // Let tesseract.js handle path resolution automatically
-        }
-      }
-
-      this.worker = await createWorker("eng", 1, workerConfig);
+      this.worker = await createWorker("eng", 1, {
+        workerPath,
+        gzip: false,
+      });
 
       // Configure for better label recognition
       await this.worker.setParameters({
