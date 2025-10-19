@@ -61,32 +61,59 @@ export async function createTesseractWorker() {
         "./tesseract-bundled",
       ];
 
+      // For serverless environments, we need to use the Node.js worker, not the browser worker
+      const nodeWorkerPath = resolve(
+        process.cwd(),
+        "node_modules/tesseract.js/src/worker-script/node/index.js"
+      );
+
       console.log(
         `Serverless environment detected. Current working directory: ${process.cwd()}`
       );
-      console.log(`Checking paths: ${possiblePaths.join(", ")}`);
+      console.log(
+        `Node.js worker path: ${nodeWorkerPath} (exists: ${existsSync(
+          nodeWorkerPath
+        )})`
+      );
 
       let workerPath, corePath, langPath;
 
-      // Find the first path that exists
-      for (const basePath of possiblePaths) {
-        const testWorkerPath = resolve(basePath, "worker.min.js");
-        console.log(
-          `Checking: ${testWorkerPath} (exists: ${existsSync(testWorkerPath)})`
-        );
-        if (existsSync(testWorkerPath)) {
-          workerPath = testWorkerPath;
-          corePath = resolve(basePath, "tesseract-core-simd.wasm.js");
-          langPath = resolve(basePath, "traineddata");
-          console.log(`Found Tesseract files at: ${basePath}`);
-          break;
+      // For serverless environments, use Node.js worker with bundled assets
+      if (existsSync(nodeWorkerPath)) {
+        workerPath = nodeWorkerPath;
+
+        // Find bundled assets for core and language data
+        for (const basePath of possiblePaths) {
+          const testCorePath = resolve(basePath, "tesseract-core-simd.wasm.js");
+          const testLangPath = resolve(basePath, "traineddata");
+
+          if (existsSync(testCorePath) && existsSync(testLangPath)) {
+            corePath = testCorePath;
+            langPath = testLangPath;
+            console.log(`Found bundled assets at: ${basePath}`);
+            break;
+          }
+        }
+
+        if (!corePath || !langPath) {
+          console.warn("Could not find bundled assets, using default paths");
+          corePath = resolve(process.cwd(), "public/tesseract");
+          langPath = resolve(process.cwd(), "public/tesseract");
         }
       }
 
-      if (!workerPath) {
-        console.warn(
-          "Could not find Tesseract bundled files, trying CDN fallback"
+      if (workerPath) {
+        worker = await createWorker("eng", 1, {
+          workerPath,
+          corePath,
+          langPath,
+          gzip: false,
+        });
+        console.log(
+          "Successfully created worker using Node.js worker with bundled assets"
         );
+      } else {
+        console.warn("Node.js worker not found, trying CDN fallback");
         // Try CDN as fallback for serverless environments
         try {
           worker = await createWorker("eng", 1, {
@@ -103,14 +130,6 @@ export async function createTesseractWorker() {
           );
           worker = await createWorker("eng", 1);
         }
-      } else {
-        worker = await createWorker("eng", 1, {
-          workerPath,
-          corePath,
-          langPath,
-          gzip: false,
-        });
-        console.log("Successfully created worker using local bundled files");
       }
     } else if (isNode) {
       // Local development and testing
