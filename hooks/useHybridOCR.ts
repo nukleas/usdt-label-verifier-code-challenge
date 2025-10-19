@@ -6,8 +6,8 @@
  */
 
 import { useState, useCallback } from "react";
-import { useClientOCR } from "@/hooks/useClientOCR";
-import type { OCRResult } from "@/types/verification";
+import { useClientOCR } from "./useClientOCR";
+import type { OCRResult } from "../types/verification";
 
 export interface UseHybridOCRReturn {
   processImage: (imageFile: File) => Promise<OCRResult>;

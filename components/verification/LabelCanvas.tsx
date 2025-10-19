@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
-import type { FieldVerification } from "@/types/verification";
+import type { FieldVerification } from "../../types/verification";
 
 interface LabelCanvasProps {
   /** Image file to render */

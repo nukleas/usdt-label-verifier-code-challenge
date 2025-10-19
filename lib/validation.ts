@@ -10,7 +10,7 @@ import type {
   ValidationResult,
   ValidationError,
   ValidImageType,
-} from "@/types/verification";
+} from "../types/verification";
 import {
   ABV_RANGE,
   VALID_IMAGE_TYPES,
@@ -18,7 +18,9 @@ import {
   MIN_IMAGE_DIMENSIONS,
   MAX_IMAGE_DIMENSIONS,
   ERROR_MESSAGES,
-} from "./constants";
+  ALCOHOL_TYPES,
+  ALCOHOL_TYPE_RULES,
+} from "@/lib/constants";
 
 // ============================================================================
 // Form Validation
@@ -51,12 +53,19 @@ export function validateFormData(
   const brandNameError = validateBrandName(data.brandName);
   if (brandNameError) errors.push(brandNameError);
 
+  // Validate alcohol type
+  const alcoholTypeError = validateAlcoholType(data.alcoholType);
+  if (alcoholTypeError) errors.push(alcoholTypeError);
+
   // Validate product type
   const productTypeError = validateProductType(data.productType);
   if (productTypeError) errors.push(productTypeError);
 
   // Validate alcohol content
-  const alcoholContentError = validateAlcoholContent(data.alcoholContent);
+  const alcoholContentError = validateAlcoholContent(
+    data.alcoholContent,
+    data.alcoholType
+  );
   if (alcoholContentError) errors.push(alcoholContentError);
 
   // Validate net contents (optional field)
@@ -120,6 +129,36 @@ export function validateBrandName(brandName: string): ValidationError | null {
 }
 
 /**
+ * Validates alcohol type field
+ *
+ * @param alcoholType - Alcohol type to validate
+ * @returns Validation error if invalid, null if valid
+ */
+export function validateAlcoholType(
+  alcoholType: string
+): ValidationError | null {
+  if (!alcoholType || alcoholType.trim().length === 0) {
+    return {
+      field: "alcoholType",
+      message: ERROR_MESSAGES.REQUIRED_FIELD,
+      code: "REQUIRED_ALCOHOL_TYPE",
+    };
+  }
+
+  // Check if the alcohol type is valid
+  const validTypes = ALCOHOL_TYPES.map((type) => type.value);
+  if (!validTypes.includes(alcoholType)) {
+    return {
+      field: "alcoholType",
+      message: "Please select a valid alcohol type",
+      code: "INVALID_ALCOHOL_TYPE",
+    };
+  }
+
+  return null;
+}
+
+/**
  * Validates product type field
  *
  * @param productType - Product type to validate
@@ -151,10 +190,12 @@ export function validateProductType(
  * Validates alcohol content field
  *
  * @param alcoholContent - Alcohol content to validate
+ * @param alcoholType - Alcohol type for range validation
  * @returns Validation error if invalid, null if valid
  */
 export function validateAlcoholContent(
-  alcoholContent: string
+  alcoholContent: string,
+  alcoholType?: string
 ): ValidationError | null {
   if (!alcoholContent || alcoholContent.trim().length === 0) {
     return {
@@ -175,10 +216,29 @@ export function validateAlcoholContent(
     };
   }
 
-  if (numericValue < ABV_RANGE.min || numericValue > ABV_RANGE.max) {
+  // Use alcohol type specific range if available, otherwise use default
+  let minABV = ABV_RANGE.min;
+  let maxABV = ABV_RANGE.max;
+
+  if (alcoholType) {
+    const rules =
+      ALCOHOL_TYPE_RULES[alcoholType as keyof typeof ALCOHOL_TYPE_RULES];
+    if (rules) {
+      minABV = rules.minABV;
+      maxABV = rules.maxABV;
+    }
+  }
+
+  if (numericValue < minABV || numericValue > maxABV) {
+    const alcoholTypeLabel = alcoholType
+      ? ALCOHOL_TYPES.find(
+          (t) => t.value === alcoholType
+        )?.label.toLowerCase() || "this alcohol type"
+      : "alcohol";
+
     return {
       field: "alcoholContent",
-      message: ERROR_MESSAGES.INVALID_ABV,
+      message: `Alcohol content must be between ${minABV}% and ${maxABV}% for ${alcoholTypeLabel}`,
       code: "INVALID_ALCOHOL_CONTENT_RANGE",
     };
   }
@@ -343,6 +403,7 @@ export async function validateImageDimensions(
 export function sanitizeFormData(data: LabelFormData): LabelFormData {
   return {
     brandName: data.brandName.trim(),
+    alcoholType: data.alcoholType.trim(),
     productType: data.productType.trim(),
     alcoholContent: data.alcoholContent.trim(),
     netContents: data.netContents?.trim(),
@@ -445,6 +506,7 @@ export function formatFieldName(field: string): string {
   // Special cases
   const specialCases: Record<string, string> = {
     brandName: "Brand Name",
+    alcoholType: "Alcohol Type",
     productType: "Product Type",
     alcoholContent: "Alcohol Content",
     netContents: "Net Contents",

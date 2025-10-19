@@ -10,7 +10,7 @@ import type {
   FieldVerification,
   VerificationResult,
   SimilarityResult,
-} from "@/types/verification";
+} from "../types/verification";
 import {
   DEFAULT_MATCHING_CONFIG,
   PRODUCT_TYPE_VARIATIONS,
@@ -23,7 +23,7 @@ import {
   VOLUME_L_PATTERN,
   VOLUME_TO_ML,
   WARNING_REQUIRED_PHRASES,
-} from "./constants";
+} from "@/lib/constants";
 import {
   findMatchingBBoxes,
   findAlcoholContentBBoxes,
@@ -33,7 +33,7 @@ import {
   findBBoxesAcrossRotations,
   type TesseractResult,
 } from "./bboxMatching";
-import type { BoundingBox } from "@/types/verification";
+import type { BoundingBox } from "../types/verification";
 
 /**
  * Transforms bboxes from primary rotation coordinate system to original orientation

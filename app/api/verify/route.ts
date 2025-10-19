@@ -35,21 +35,38 @@ export async function POST(request: NextRequest) {
 
       // Extract fields
       const brandName = formData.get("brandName") as string;
+      const alcoholType = formData.get("alcoholType") as string;
       const productType = formData.get("productType") as string;
       const alcoholContent = formData.get("alcoholContent") as string;
       const netContents = (formData.get("netContents") as string) || undefined;
-      const imageFile = formData.get("image") as File;
+      const imageFile = formData.get("label-image") as File;
+
+      // Debug: Log the form data
+      console.log("Form data received:", {
+        brandName,
+        alcoholType,
+        productType,
+        alcoholContent,
+        netContents,
+        imageFile: imageFile
+          ? { name: imageFile.name, size: imageFile.size, type: imageFile.type }
+          : null,
+      });
 
       // Validate inputs
       const validation = validateFormData({
         brandName,
+        alcoholType,
         productType,
         alcoholContent,
         netContents,
         image: imageFile,
       });
 
+      console.log("Validation result:", validation);
+
       if (!validation.valid) {
+        console.log("Validation failed:", validation.errors);
         return NextResponse.json(
           {
             success: false,
@@ -71,6 +88,7 @@ export async function POST(request: NextRequest) {
       // Build form data object
       labelData = {
         brandName,
+        alcoholType,
         productType,
         alcoholContent,
         netContents,
@@ -80,11 +98,18 @@ export async function POST(request: NextRequest) {
       const body = await request.json();
 
       // Extract fields
-      const { brandName, productType, alcoholContent, netContents } = body;
+      const {
+        brandName,
+        alcoholType,
+        productType,
+        alcoholContent,
+        netContents,
+      } = body;
 
       // Validate inputs (no image required for JSON mode)
       const validation = validateFormData({
         brandName,
+        alcoholType,
         productType,
         alcoholContent,
         netContents,
@@ -118,6 +143,7 @@ export async function POST(request: NextRequest) {
       // Build form data object
       labelData = {
         brandName,
+        alcoholType,
         productType,
         alcoholContent,
         netContents,

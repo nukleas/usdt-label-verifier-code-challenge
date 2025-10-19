@@ -12,7 +12,7 @@ import {
   matchGovernmentWarning,
   normalizeText,
   calculateSimilarity,
-} from "@/lib/textMatching";
+} from "../../lib/textMatching";
 
 describe("Text Matching Utilities", () => {
   describe("normalizeText", () => {
@@ -56,7 +56,10 @@ describe("Text Matching Utilities", () => {
 
   describe("matchBrandName", () => {
     it("should match exact brand name", () => {
-      const result = matchBrandName("ORPHEUS BREWING", "ORPHEUS BREWING DON'T LOOK BACK");
+      const result = matchBrandName(
+        "ORPHEUS BREWING",
+        "ORPHEUS BREWING DON'T LOOK BACK"
+      );
 
       expect(result.status).toBe("match");
       expect(result.confidence).toBe(100);
@@ -94,7 +97,10 @@ describe("Text Matching Utilities", () => {
     });
 
     it("should match product type variations", () => {
-      const result = matchProductType("bourbon", "kentucky straight bourbon whiskey");
+      const result = matchProductType(
+        "bourbon",
+        "kentucky straight bourbon whiskey"
+      );
 
       expect(result.status).toBe("match");
     });

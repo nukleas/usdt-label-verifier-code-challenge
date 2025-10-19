@@ -16,6 +16,9 @@ export interface LabelFormData {
   /** Brand name of the alcohol product (e.g., "Old Tom Distillery") */
   brandName: string;
 
+  /** Alcohol type category (e.g., "Distilled Spirits", "Beer", "Wine") */
+  alcoholType: string;
+
   /** Product class/type (e.g., "Kentucky Straight Bourbon Whiskey", "IPA") */
   productType: string;
 

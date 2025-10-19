@@ -7,7 +7,7 @@
 
 import { useState, useCallback } from "react";
 import { createWorker, type Page } from "tesseract.js";
-import type { OCRResult, TextBlock } from "@/types/verification";
+import type { OCRResult, TextBlock } from "../types/verification";
 
 export interface UseClientOCRReturn {
   processImage: (imageFile: File) => Promise<OCRResult>;

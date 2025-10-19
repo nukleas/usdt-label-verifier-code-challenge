@@ -10,9 +10,9 @@
 import React, { useCallback, useState, useEffect } from "react";
 import { Alert } from "@trussworks/react-uswds";
 import Image from "next/image";
-import type { ImageUploadProps } from "@/types/verification";
-import { validateImageFile } from "@/lib/validation";
-import { MAX_IMAGE_SIZE, VALID_IMAGE_TYPES } from "@/lib/constants";
+import type { ImageUploadProps } from "../../types/verification";
+import { validateImageFile } from "../../lib/validation";
+import { MAX_IMAGE_SIZE, VALID_IMAGE_TYPES } from "../../lib/constants";
 
 export default function ImageUpload({
   onChange,

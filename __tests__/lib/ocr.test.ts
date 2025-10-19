@@ -8,8 +8,8 @@
 
 import { readFileSync } from "fs";
 import { join } from "path";
-import { OCRProcessor } from "@/lib/ocr-core";
-import { createTesseractWorker } from "@/lib/ocr";
+import { OCRProcessor } from "../../lib/ocr-core";
+import { createTesseractWorker } from "../../lib/ocr";
 
 // Increase timeout for OCR processing (can take 10-20 seconds with 4 rotations)
 jest.setTimeout(60000);

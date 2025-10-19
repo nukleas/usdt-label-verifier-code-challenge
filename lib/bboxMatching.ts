@@ -5,7 +5,7 @@
  * and find bounding boxes for matched text patterns.
  */
 
-import type { BoundingBox } from "@/types/verification";
+import type { BoundingBox } from "../types/verification";
 
 // ============================================================================
 // Types for Tesseract.js Result Structure

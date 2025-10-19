@@ -12,7 +12,7 @@
  */
 
 import { createWorker } from "tesseract.js";
-import type { OCRResult } from "@/types/verification";
+import type { OCRResult } from "../types/verification";
 import { ERROR_MESSAGES } from "./constants";
 import { OCRProcessor } from "./ocr-core";
 

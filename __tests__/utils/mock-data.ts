@@ -1,9 +1,10 @@
 // Mock data for testing
 export const mockLabelData = {
   brandName: "Test Brand",
-  productName: "Test Product",
+  alcoholType: "wine",
+  productType: "Red Wine",
   alcoholContent: "12.5%",
-  volume: "750ml",
+  netContents: "750ml",
   producer: "Test Winery",
   vintage: "2023",
   region: "Napa Valley",

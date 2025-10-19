@@ -7,7 +7,7 @@
  */
 
 import React from "react";
-import type { FieldVerificationProps } from "@/types/verification";
+import type { FieldVerificationProps } from "../../types/verification";
 
 export default function FieldVerification({
   field,
@@ -53,7 +53,11 @@ export default function FieldVerification({
   return (
     <div
       className={`padding-2 border-left-05 border-${
-        status === "match" ? "success" : status === "mismatch" ? "error" : "warning"
+        status === "match"
+          ? "success"
+          : status === "mismatch"
+          ? "error"
+          : "warning"
       } ${config.bgColor} margin-bottom-2`}
     >
       <div className="display-flex flex-align-center">
@@ -65,9 +69,7 @@ export default function FieldVerification({
         </span>
         <h4 className="margin-0 flex-fill">{displayName}</h4>
         {confidence !== undefined && (
-          <span className="text-base text-bold">
-            {confidence}%
-          </span>
+          <span className="text-base text-bold">{confidence}%</span>
         )}
       </div>
 

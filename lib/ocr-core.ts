@@ -6,7 +6,7 @@
  */
 
 import type { Worker, Block } from "tesseract.js";
-import type { OCRResult, TextBlock } from "@/types/verification";
+import type { OCRResult, TextBlock } from "../types/verification";
 
 // Rotation angles to try (covers all 4 orientations)
 const ROTATION_ANGLES = [0, 90, 180, 270] as const;

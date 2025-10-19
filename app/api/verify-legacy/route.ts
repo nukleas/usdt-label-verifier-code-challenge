@@ -9,11 +9,11 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { processOCR } from "@/lib/ocr";
-import { compareFields } from "@/lib/textMatching";
-import { validateFormData } from "@/lib/validation";
-import type { LabelFormData } from "@/types/verification";
-import { ERROR_MESSAGES } from "@/lib/constants";
+import { processOCR } from "../../lib/ocr";
+import { compareFields } from "../../lib/textMatching";
+import { validateFormData } from "../../lib/validation";
+import type { LabelFormData } from "../../types/verification";
+import { ERROR_MESSAGES } from "../../lib/constants";
 
 /**
  * POST /api/verify-legacy

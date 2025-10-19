@@ -17,10 +17,13 @@ import {
   FooterNav,
   Link,
 } from "@trussworks/react-uswds";
-import LabelForm from "@/components/verification/LabelForm";
-import VerificationResults from "@/components/verification/VerificationResults";
-import LoadingState from "@/components/verification/LoadingState";
-import type { LabelFormData, VerificationResult } from "@/types/verification";
+import LabelForm from "../../components/verification/LabelForm";
+import VerificationResults from "../../components/verification/VerificationResults";
+import LoadingState from "../../components/verification/LoadingState";
+import type {
+  LabelFormData,
+  VerificationResult,
+} from "../../types/verification";
 
 export default function VerifyPage() {
   const [loading, setLoading] = useState(false);
@@ -44,12 +47,13 @@ export default function VerifyPage() {
         // Create FormData for API request
         const body = new FormData();
         body.append("brandName", formData.brandName);
+        body.append("alcoholType", formData.alcoholType);
         body.append("productType", formData.productType);
         body.append("alcoholContent", formData.alcoholContent);
         if (formData.netContents) {
           body.append("netContents", formData.netContents);
         }
-        body.append("image", image);
+        body.append("label-image", image);
 
         // Simulate progress (OCR happens on server)
         const progressInterval = setInterval(() => {

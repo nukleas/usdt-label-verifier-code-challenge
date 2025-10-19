@@ -7,7 +7,7 @@
  */
 
 import React from "react";
-import type { LoadingStateProps } from "@/types/verification";
+import type { LoadingStateProps } from "../../types/verification";
 
 export default function LoadingState({
   message = "Processing image...",

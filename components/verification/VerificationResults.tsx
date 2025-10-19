@@ -8,7 +8,7 @@
 
 import React, { useState } from "react";
 import { Alert, Button, Accordion } from "@trussworks/react-uswds";
-import type { VerificationResultsProps } from "@/types/verification";
+import type { VerificationResultsProps } from "../../types/verification";
 import FieldVerification from "./FieldVerification";
 import LabelCanvas from "./LabelCanvas";
 

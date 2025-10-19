@@ -5,7 +5,7 @@
  * and configuration values used throughout the application.
  */
 
-import type { MatchingConfig, OCRConfig } from "@/types/verification";
+import type { MatchingConfig, OCRConfig } from "../types/verification";
 
 // ============================================================================
 // TTB Regulatory Requirements
@@ -190,6 +190,171 @@ export const DEFAULT_OCR_CONFIG: OCRConfig = {
 };
 
 // ============================================================================
+// Alcohol Type Categories
+// ============================================================================
+
+/**
+ * Alcohol type categories for TTB classification
+ * Based on TTB regulations and common industry categories
+ */
+export const ALCOHOL_TYPES = [
+  {
+    value: "distilled-spirits",
+    label: "Distilled Spirits",
+    description: "Whiskey, Vodka, Gin, Rum, Tequila, Brandy, etc.",
+    examples: [
+      "Kentucky Straight Bourbon Whiskey",
+      "Vodka",
+      "Gin",
+      "Rum",
+      "Tequila",
+    ],
+  },
+  {
+    value: "beer",
+    label: "Beer",
+    description: "Malt beverages including ales, lagers, stouts, etc.",
+    examples: ["IPA", "Lager", "Stout", "Porter", "Pilsner"],
+  },
+  {
+    value: "wine",
+    label: "Wine",
+    description: "Fermented grape or other fruit beverages",
+    examples: ["Red Wine", "White Wine", "Champagne", "Sparkling Wine"],
+  },
+  {
+    value: "malt-beverage",
+    label: "Malt Beverage",
+    description: "Non-beer malt beverages (flavored malt drinks, etc.)",
+    examples: ["Flavored Malt Beverage", "Hard Seltzer", "Malt Liquor"],
+  },
+  {
+    value: "cider",
+    label: "Cider",
+    description: "Fermented apple or other fruit beverages",
+    examples: ["Hard Cider", "Apple Cider", "Pear Cider"],
+  },
+] as const;
+
+/**
+ * Product type options for each alcohol type
+ * Based on TTB regulations and common industry categories
+ */
+export const PRODUCT_TYPE_OPTIONS = {
+  "distilled-spirits": [
+    "Kentucky Straight Bourbon Whiskey",
+    "Straight Rye Whiskey",
+    "Vodka",
+    "Gin",
+    "Rum",
+    "Tequila",
+    "Brandy",
+    "Cognac",
+    "Scotch Whisky",
+    "Irish Whiskey",
+    "Canadian Whisky",
+    "Tennessee Whiskey",
+    "Moonshine",
+    "Liqueur",
+    "Cordials",
+  ],
+  beer: [
+    "Lager",
+    "Pilsner",
+    "Ale",
+    "Pale Ale",
+    "India Pale Ale (IPA)",
+    "Stout",
+    "Porter",
+    "Wheat Beer",
+    "Hefeweizen",
+    "Sour Beer",
+    "Lambic",
+    "Malt Liquor",
+    "Bock",
+    "Doppelbock",
+    "Barleywine",
+  ],
+  wine: [
+    "Red Wine",
+    "White Wine",
+    "Rosé Wine",
+    "Sparkling Wine",
+    "Champagne",
+    "Dessert Wine",
+    "Fortified Wine",
+    "Table Wine",
+    "Cabernet Sauvignon",
+    "Merlot",
+    "Pinot Noir",
+    "Syrah",
+    "Chardonnay",
+    "Sauvignon Blanc",
+    "Pinot Grigio",
+    "Riesling",
+    "Red Blend",
+    "White Blend",
+    "Proprietary Blend",
+  ],
+  "malt-beverage": [
+    "Flavored Malt Beverage",
+    "Hard Seltzer",
+    "Malt Liquor",
+    "Malt-Based Cocktail",
+    "Hard Lemonade",
+    "Hard Iced Tea",
+    "Malt Beverage",
+  ],
+  cider: [
+    "Hard Cider",
+    "Apple Cider",
+    "Pear Cider",
+    "Perry",
+    "Fruit Cider",
+    "Dry Cider",
+    "Sweet Cider",
+    "Sparkling Cider",
+  ],
+} as const;
+
+/**
+ * Alcohol type validation rules
+ * Different types may have different requirements
+ */
+export const ALCOHOL_TYPE_RULES = {
+  "distilled-spirits": {
+    minABV: 2.5, // Minimum for liqueurs (flavored distilled spirits)
+    maxABV: 95, // Maximum practical ABV
+    requiredFields: ["brandName", "productType", "alcoholContent"],
+    optionalFields: ["netContents"],
+  },
+  beer: {
+    minABV: 0.5, // Non-alcoholic beer threshold
+    maxABV: 15, // Maximum practical ABV for beer
+    requiredFields: ["brandName", "productType", "alcoholContent"],
+    optionalFields: ["netContents"],
+  },
+  wine: {
+    minABV: 7, // Minimum ABV for wine
+    maxABV: 24, // Maximum ABV for wine
+    requiredFields: ["brandName", "productType", "alcoholContent"],
+    optionalFields: ["netContents"],
+  },
+  "malt-beverage": {
+    minABV: 0.5,
+    maxABV: 15,
+    requiredFields: ["brandName", "productType", "alcoholContent"],
+    optionalFields: ["netContents"],
+  },
+  cider: {
+    minABV: 0.5,
+    maxABV: 8.5, // Corrected: cider has lower max ABV
+    requiredFields: ["brandName", "productType", "alcoholContent"],
+    optionalFields: ["netContents"],
+  },
+} as const;
+
+// ============================================================================
 // Product Type Variations
 // ============================================================================
 
@@ -323,8 +488,7 @@ export const ERROR_MESSAGES = {
   // OCR errors
   OCR_FAILED: "Image processing failed",
   NO_TEXT_FOUND: "Unable to extract text from image",
-  LOW_CONFIDENCE:
-    "Low OCR confidence - image quality may affect accuracy",
+  LOW_CONFIDENCE: "Low OCR confidence - image quality may affect accuracy",
 
   // API errors
   INTERNAL_ERROR: "Processing error occurred",
@@ -340,7 +504,8 @@ export const ERROR_MESSAGES = {
  * Standard success messages
  */
 export const SUCCESS_MESSAGES = {
-  VERIFICATION_PASS: "Label verification complete. All required information verified.",
+  VERIFICATION_PASS:
+    "Label verification complete. All required information verified.",
   FIELD_MATCH: "verified",
   EXACT_MATCH: "Verified",
   FUZZY_MATCH: "verified",
@@ -396,6 +561,9 @@ export const CONSTANTS = {
     MATCHING: DEFAULT_MATCHING_CONFIG,
     OCR: DEFAULT_OCR_CONFIG,
   },
+  ALCOHOL_TYPES,
+  ALCOHOL_TYPE_RULES,
+  PRODUCT_TYPE_OPTIONS,
   PRODUCT_TYPE_VARIATIONS,
   VOLUME_TO_ML,
   STANDARD_BOTTLE_SIZES,

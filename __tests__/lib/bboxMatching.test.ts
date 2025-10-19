@@ -9,8 +9,8 @@ import {
   findPatternBBoxes,
   mergeBBoxes,
   deduplicateBBoxes,
-} from "@/lib/bboxMatching";
-import type { BoundingBox } from "@/types/verification";
+} from "../../lib/bboxMatching";
+import type { BoundingBox } from "../../types/verification";
 
 describe("BBox Matching Utilities", () => {
   describe("mergeBBoxes", () => {
@@ -48,9 +48,7 @@ describe("BBox Matching Utilities", () => {
     });
 
     it("should handle single box", () => {
-      const boxes: BoundingBox[] = [
-        { x0: 10, y0: 10, x1: 50, y1: 30 },
-      ];
+      const boxes: BoundingBox[] = [{ x0: 10, y0: 10, x1: 50, y1: 30 }];
 
       const merged = mergeBBoxes(boxes, 10);
       expect(merged).toEqual(boxes);
@@ -198,9 +196,21 @@ describe("BBox Matching Utilities", () => {
                     text: "TEST TEST TEST",
                     confidence: 95,
                     words: {
-                      0: { bbox: { x0: 0, y0: 0, x1: 100, y1: 50 }, text: "TEST", confidence: 95 },
-                      1: { bbox: { x0: 110, y0: 0, x1: 210, y1: 50 }, text: "TEST", confidence: 95 },
-                      2: { bbox: { x0: 220, y0: 0, x1: 320, y1: 50 }, text: "TEST", confidence: 95 },
+                      0: {
+                        bbox: { x0: 0, y0: 0, x1: 100, y1: 50 },
+                        text: "TEST",
+                        confidence: 95,
+                      },
+                      1: {
+                        bbox: { x0: 110, y0: 0, x1: 210, y1: 50 },
+                        text: "TEST",
+                        confidence: 95,
+                      },
+                      2: {
+                        bbox: { x0: 220, y0: 0, x1: 320, y1: 50 },
+                        text: "TEST",
+                        confidence: 95,
+                      },
                     },
                   },
                 },
