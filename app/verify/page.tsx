@@ -223,7 +223,7 @@ export default function VerifyPage() {
                 TTB.gov
               </Link>,
               <Link
-                href="https://github.com"
+                href="https://github.com/nukleas/usdt-label-verifier-code-challenge"
                 key="github"
                 target="_blank"
                 rel="noopener noreferrer"
