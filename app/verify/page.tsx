@@ -56,7 +56,7 @@ export default function VerifyPage() {
           setProgress((prev) => Math.min(prev + 0.1, 0.9));
         }, 200);
 
-        // Call API
+        // Call OCR API
         const response = await fetch("/api/verify", {
           method: "POST",
           body,

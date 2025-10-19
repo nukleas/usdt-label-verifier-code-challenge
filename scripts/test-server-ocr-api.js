@@ -35,7 +35,7 @@ async function testServerOCRAPI() {
 
     // Test the API endpoint
     const startTime = Date.now();
-    const response = await fetch("http://localhost:3000/api/verify-server", {
+    const response = await fetch("http://localhost:3000/api/verify", {
       method: "POST",
       body: formData,
     });
