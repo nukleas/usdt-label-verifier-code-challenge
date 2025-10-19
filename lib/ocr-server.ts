@@ -39,17 +39,39 @@ export class ServerOCRProcessor {
     console.log("Initializing server-side Tesseract worker...");
 
     try {
-      // Use the same approach as our working ocr.ts
-      const workerPath = require.resolve(
-        "tesseract.js/src/worker-script/node/index.js"
-      );
-
-      console.log("Using Node.js worker:", workerPath);
-
-      this.worker = await createWorker("eng", 1, {
-        workerPath,
+      // Detect if running in serverless environment (Vercel, etc.)
+      const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY;
+      
+      const workerConfig: {
+        gzip: boolean;
+        logger: (m: { status?: string; progress?: number }) => void;
+        workerPath?: string;
+        corePath?: string;
+        langPath?: string;
+      } = {
         gzip: false,
-      });
+        logger: (m: { status?: string; progress?: number }) => {
+          if (m.status === "recognizing text") {
+            console.log(`OCR Progress: ${Math.round((m.progress || 0) * 100)}%`);
+          } else if (m.status) {
+            console.log(`OCR Status: ${m.status}`);
+          }
+        },
+      };
+
+      if (isServerless) {
+        // Use CDN paths for serverless environments
+        console.log("Detected serverless environment, using CDN paths");
+        workerConfig.workerPath = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js";
+        workerConfig.corePath = "https://cdn.jsdelivr.net/npm/tesseract.js-core@5";
+        workerConfig.langPath = "https://tessdata.projectnaptha.com/4.0.0";
+      } else {
+        // Use local paths for development
+        console.log("Using local development paths");
+        workerConfig.workerPath = "./node_modules/tesseract.js/src/worker-script/node/index.js";
+      }
+      
+      this.worker = await createWorker("eng", 1, workerConfig);
 
       // Configure for better label recognition
       await this.worker.setParameters({

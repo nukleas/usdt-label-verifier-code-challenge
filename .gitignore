@@ -40,4 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 /playwright-report
+/test-results/label-verification-Label-V-d114f-ct-bounding-box-positioning-chromium
 /test-results
