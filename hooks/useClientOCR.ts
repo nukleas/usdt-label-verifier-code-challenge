@@ -35,13 +35,12 @@ export function useClientOCR(): UseClientOCRReturn {
         const worker = await createWorker("eng", 1, {
           logger: (m) => {
             if (m.status === "recognizing text") {
-              // Spread progress across rotations (0.2 to 0.9)
               setProgress(0.2 + (m.progress || 0) * 0.175);
             }
           },
-          // Use local bundled files (fallback to CDN if not available)
-          workerPath: "/tesseract-bundled/worker.min.js",
-          corePath: "/tesseract-bundled/tesseract-core-simd.wasm.js",
+          // Use absolute URLs for worker and core files
+          workerPath: `${window.location.origin}/tesseract-bundled/worker.min.js`,
+          corePath: `${window.location.origin}/tesseract-bundled/tesseract-core-simd.wasm.js`,
         });
 
         // Configure for better label recognition
@@ -105,14 +104,37 @@ export function useClientOCR(): UseClientOCRReturn {
         // Get original image dimensions
         let imageWidth = 0;
         let imageHeight = 0;
-        await new Promise<void>((resolve) => {
+        await new Promise<void>((resolve, reject) => {
           const img = new Image();
+          const url = URL.createObjectURL(imageFile);
+
+          const cleanup = () => {
+            URL.revokeObjectURL(url);
+            img.onload = null;
+            img.onerror = null;
+          };
+
+          // Add timeout fallback to prevent hanging
+          const timeoutId = setTimeout(() => {
+            cleanup();
+            reject(new Error("Image loading timeout"));
+          }, 10000); // 10 second timeout
+
           img.onload = () => {
+            clearTimeout(timeoutId);
             imageWidth = img.width;
             imageHeight = img.height;
+            cleanup();
             resolve();
           };
-          img.src = URL.createObjectURL(imageFile);
+
+          img.onerror = () => {
+            clearTimeout(timeoutId);
+            cleanup();
+            reject(new Error("Failed to load image"));
+          };
+
+          img.src = url;
         });
 
         for (let i = 0; i < rotations.length; i++) {

@@ -18,8 +18,6 @@ export interface UseHybridOCRReturn {
 }
 
 export function useHybridOCR(): UseHybridOCRReturn {
-  const [progress, setProgress] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ocrMethod, setOcrMethod] = useState<"client" | "server" | "hybrid">(
     "hybrid"
@@ -30,8 +28,6 @@ export function useHybridOCR(): UseHybridOCRReturn {
 
   const processImage = useCallback(
     async (imageFile: File): Promise<OCRResult> => {
-      setIsProcessing(true);
-      setProgress(0);
       setError(null);
 
       try {
@@ -70,17 +66,15 @@ export function useHybridOCR(): UseHybridOCRReturn {
         setError(errorMessage);
         console.error("Hybrid OCR error:", err);
         throw err;
-      } finally {
-        setIsProcessing(false);
       }
     },
-    [clientOCR.processImage]
+    [clientOCR]
   );
 
   return {
     processImage,
     progress: clientOCR.progress,
-    isProcessing: isProcessing || clientOCR.isProcessing,
+    isProcessing: clientOCR.isProcessing,
     error: error || clientOCR.error,
     ocrMethod,
   };
