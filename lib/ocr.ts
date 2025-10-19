@@ -13,7 +13,6 @@
 
 import { createWorker } from "tesseract.js";
 import { resolve } from "path";
-import { existsSync } from "fs";
 import type { OCRResult } from "@/types/verification";
 import { ERROR_MESSAGES } from "./constants";
 import { OCRProcessor } from "./ocr-core";
@@ -43,94 +42,17 @@ export async function createTesseractWorker() {
 
   try {
     if (isServerless) {
-      // For serverless environments, try multiple path strategies
+      // For serverless environments, let Tesseract.js handle everything automatically
       console.log(
-        "Creating Tesseract worker for serverless environment using local bundled files"
+        "Creating Tesseract worker for serverless environment using default configuration"
       );
 
-      // Try different possible paths for serverless environments
-      const possiblePaths = [
-        // Vercel deployment structure
-        resolve(process.cwd(), ".next/server/chunks/public/tesseract-bundled"),
-        // Standard public directory
-        resolve(process.cwd(), "public/tesseract-bundled"),
-        // Alternative Vercel structure
-        resolve(process.cwd(), "tesseract-bundled"),
-        // Fallback to relative paths
-        "./public/tesseract-bundled",
-        "./tesseract-bundled",
-      ];
-
-      // For serverless environments, we need to use the Node.js worker, not the browser worker
-      const nodeWorkerPath = resolve(
-        process.cwd(),
-        "node_modules/tesseract.js/src/worker-script/node/index.js"
-      );
-
-      console.log(
-        `Serverless environment detected. Current working directory: ${process.cwd()}`
-      );
-      console.log(
-        `Node.js worker path: ${nodeWorkerPath} (exists: ${existsSync(
-          nodeWorkerPath
-        )})`
-      );
-
-      let workerPath, corePath, langPath;
-
-      // For serverless environments, use Node.js worker with bundled assets
-      if (existsSync(nodeWorkerPath)) {
-        workerPath = nodeWorkerPath;
-
-        // Find bundled assets for core and language data
-        for (const basePath of possiblePaths) {
-          const testCorePath = resolve(basePath, "tesseract-core-simd.wasm.js");
-          const testLangPath = resolve(basePath, "traineddata");
-
-          if (existsSync(testCorePath) && existsSync(testLangPath)) {
-            corePath = testCorePath;
-            langPath = testLangPath;
-            console.log(`Found bundled assets at: ${basePath}`);
-            break;
-          }
-        }
-
-        if (!corePath || !langPath) {
-          console.warn("Could not find bundled assets, using default paths");
-          corePath = resolve(process.cwd(), "public/tesseract");
-          langPath = resolve(process.cwd(), "public/tesseract");
-        }
-      }
-
-      if (workerPath) {
-        worker = await createWorker("eng", 1, {
-          workerPath,
-          corePath,
-          langPath,
-          gzip: false,
-        });
-        console.log(
-          "Successfully created worker using Node.js worker with bundled assets"
-        );
-      } else {
-        console.warn("Node.js worker not found, trying CDN fallback");
-        // Try CDN as fallback for serverless environments
-        try {
-          worker = await createWorker("eng", 1, {
-            workerPath: "https://unpkg.com/tesseract.js@4/dist/worker.min.js",
-            corePath:
-              "https://unpkg.com/tesseract.js-core@4/tesseract-core-simd.wasm.js",
-            gzip: false,
-          });
-          console.log("Successfully created worker using CDN fallback");
-        } catch (cdnError) {
-          console.warn(
-            "CDN fallback failed, using default configuration:",
-            cdnError
-          );
-          worker = await createWorker("eng", 1);
-        }
-      }
+      // With serverExternalPackages, Tesseract.js should work out of the box
+      // Let it use its default configuration and find files automatically
+      worker = await createWorker("eng", 1, {
+        gzip: false,
+      });
+      console.log("Successfully created worker using default configuration");
     } else if (isNode) {
       // Local development and testing
       console.log("Creating Tesseract worker for local Node.js environment");
