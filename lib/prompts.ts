@@ -22,11 +22,11 @@ export function buildVerificationPrompt(formData: LabelFormData): string {
 
 **REQUIRED VERIFICATION FIELDS & MATCHING RULES:**
 
-1. **Brand Name:** Must be an exact match (case-insensitive is acceptable).
+1. **Brand Name:** Must match, ignoring case.
 
 2. **Product Class/Type:** Must be an exact match (e.g., "Vodka", "Kentucky Straight Bourbon Whiskey").
 
-3. **Alcohol Content (ABV):** Must match the percentage number on the label. Minor formatting differences are acceptable (e.g., '40.0 % alc./vol.' on the label is a match for '40%' in the form). Tolerance: ±0.5% is exact match, ±2% is loose match (mismatch).
+3. **Alcohol Content (ABV):** Must match the percentage number on the label. Minor formatting differences are acceptable (e.g., '40.0 % alc./vol.' on the label is a match for '40%' in the form). Status mapping: if absolute difference ≤ 0.5% return "match", if > 0.5% and ≤ 2.0% return "match" (loose match), if > 2.0% return "mismatch", if ABV is missing on the label return "not_found".
 
 4. **Net Contents:** Must match the volume (e.g., '750 mL'). Manufacturing variance tolerance of 2% is acceptable.
 
