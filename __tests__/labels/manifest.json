@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "images": [
+    {
+      "fileName": "orpheus_seal_main.jpg",
+      "brandName": "Orpheus",
+      "alcoholType": "beer",
+      "productType": "Seal",
+      "alcoholContent": "4",
+      "netContents": "12 fl oz",
+      "hasGovernmentWarning": true,
+      "notes": "Existing test image - good example of vertical government warning text",
+      "addedDate": "2025-10-20T00:00:00.000Z"
+    }
+  ]
+}
