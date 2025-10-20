@@ -287,8 +287,17 @@ export function findPatternBBoxes(
         if (!line.words) continue;
         const words = objectToArray(line.words);
 
+        // Check line-level text first (handles multi-word patterns like "200 ML")
+        if (pattern.test(line.text)) {
+          // Pattern found in this line - collect all word bboxes from this line
+          for (const word of words) {
+            bboxes.push(word.bbox);
+          }
+          continue;
+        }
+
+        // Fallback: Check individual words (for patterns within single words)
         for (const word of words) {
-          // Test if this word matches the pattern
           if (pattern.test(word.text)) {
             bboxes.push(word.bbox);
           }
