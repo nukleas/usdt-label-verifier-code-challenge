@@ -40,7 +40,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 **Tesseract.js**
 - Open source OCR with no API costs or rate limits
-- Good accuracy for printed labels (90%+ confidence typical)
+- Processes printed text using LSTM neural network
 - Runs server-side in Node.js
 
 **US Web Design System (USWDS)**
@@ -210,7 +210,7 @@ Response:
 - No database needed (stateless verification)
 
 **Limitations:**
-- OCR accuracy depends on image quality (typical 85-95% confidence)
+- OCR accuracy depends on image quality
 - No batch processing (one label at a time)
 - Government warning detection checks for key phrases, not exact word-for-word match (as specified in requirements)
 - No image preprocessing (contrast enhancement, de-skewing)

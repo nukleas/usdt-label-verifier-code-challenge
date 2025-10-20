@@ -68,11 +68,9 @@ export function validateFormData(
   );
   if (alcoholContentError) errors.push(alcoholContentError);
 
-  // Validate net contents (optional field)
-  if (data.netContents) {
-    const netContentsError = validateNetContents(data.netContents);
-    if (netContentsError) errors.push(netContentsError);
-  }
+  // Validate net contents (required field per 27 CFR 5.70)
+  const netContentsError = validateNetContents(data.netContents);
+  if (netContentsError) errors.push(netContentsError);
 
   // Validate image
   if (!data.image) {
@@ -247,7 +245,7 @@ export function validateAlcoholContent(
 }
 
 /**
- * Validates net contents field (optional)
+ * Validates net contents field (required per 27 CFR 5.70)
  *
  * @param netContents - Net contents to validate
  * @returns Validation error if invalid, null if valid
@@ -255,8 +253,13 @@ export function validateAlcoholContent(
 export function validateNetContents(
   netContents: string
 ): ValidationError | null {
+  // Net contents is required per TTB regulations
   if (!netContents || netContents.trim().length === 0) {
-    return null; // Optional field
+    return {
+      field: "netContents",
+      message: "Net contents is required (e.g., '750 mL', '12 oz')",
+      code: "REQUIRED_NET_CONTENTS",
+    };
   }
 
   // Check for valid format: number + space + unit
@@ -455,7 +458,7 @@ export function sanitizeFormData(data: LabelFormData): LabelFormData {
     alcoholType: data.alcoholType.trim(),
     productType: data.productType.trim(),
     alcoholContent: data.alcoholContent.trim(),
-    netContents: data.netContents?.trim(),
+    netContents: data.netContents.trim(),
   };
 }
 

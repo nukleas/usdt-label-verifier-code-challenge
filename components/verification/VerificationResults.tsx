@@ -11,11 +11,13 @@ import { Alert, Button, Accordion } from "@trussworks/react-uswds";
 import type { VerificationResultsProps } from "../../types/verification";
 import FieldVerification from "./FieldVerification";
 import LabelCanvas from "./LabelCanvas";
+import { getRequiredFields } from "../../lib/constants";
 
 export default function VerificationResults({
   result,
   onReset,
   imageFile,
+  alcoholType,
 }: VerificationResultsProps) {
   const [showRawText] = useState(false);
   const [showCanvas] = useState(false);
@@ -26,49 +28,15 @@ export default function VerificationResults({
     rawOCRText,
     processingTime,
     ocrBlocks,
-    ocrRotation,
   } = result;
 
-  const describeRotation = (
-    rotation: NonNullable<typeof ocrRotation>
-  ): string => {
-    const degrees = Math.round((rotation.appliedRadians * 180) / Math.PI);
-    const normalized = ((degrees % 360) + 360) % 360;
-
-    const strategyLabel =
-      rotation.strategy === "manual"
-        ? "manual adjustment"
-        : rotation.strategy === "auto"
-        ? "automatic detection"
-        : "no adjustment";
-
-    const candidates =
-      rotation.candidatesDegrees && rotation.candidatesDegrees.length > 0
-        ? Array.from(new Set(rotation.candidatesDegrees)).sort((a, b) => a - b)
-        : undefined;
-
-    const candidatesText =
-      candidates && candidates.length > 1
-        ? ` (checked ${candidates.map((angle) => `${angle}°`).join(", ")})`
-        : "";
-
-    if (normalized === 0) {
-      return `no adjustment needed (${strategyLabel})${candidatesText}`;
-    }
-
-    return `${normalized}° ${strategyLabel}${candidatesText}`;
-  };
-
-  const rotationDescription = ocrRotation
-    ? describeRotation(ocrRotation)
-    : null;
-
-  // Separate required and optional fields
+  // Separate required and optional fields based on alcohol type
+  const requiredFieldNames = getRequiredFields(alcoholType);
   const requiredFields = fields.filter((f) =>
-    ["brandName", "productType", "alcoholContent"].includes(f.field)
+    requiredFieldNames.includes(f.field)
   );
   const optionalFields = fields.filter(
-    (f) => !["brandName", "productType", "alcoholContent"].includes(f.field)
+    (f) => !requiredFieldNames.includes(f.field)
   );
 
   return (
@@ -98,14 +66,6 @@ export default function VerificationResults({
         <span className="text-base margin-top-1">
           Processing time: {(processingTime / 1000).toFixed(2)}s
         </span>
-        {rotationDescription && (
-          <>
-            <br />
-            <span className="text-base margin-top-05">
-              Image processing: {rotationDescription}
-            </span>
-          </>
-        )}
       </Alert>
 
       {/* Required Fields */}

@@ -23,6 +23,7 @@ import {
   VOLUME_L_PATTERN,
   VOLUME_TO_ML,
   WARNING_REQUIRED_PHRASES,
+  getRequiredFields,
 } from "@/lib/constants";
 import {
   findMatchingBBoxes,
@@ -162,18 +163,17 @@ export function compareFields(
     )
   );
 
-  if (formData.netContents) {
-    fields.push(
-      matchNetContents(
-        formData.netContents,
-        ocrText,
-        rawTesseract,
-        primaryRotationDegrees,
-        imageWidth,
-        imageHeight
-      )
-    );
-  }
+  // Net contents is required per 27 CFR 5.70
+  fields.push(
+    matchNetContents(
+      formData.netContents,
+      ocrText,
+      rawTesseract,
+      primaryRotationDegrees,
+      imageWidth,
+      imageHeight
+    )
+  );
 
   // Bonus: Check government warning (needs all rotations for vertical text!)
   fields.push(
@@ -186,8 +186,8 @@ export function compareFields(
     )
   );
 
-  // Determine overall status
-  const overallStatus = determineOverallStatus(fields);
+  // Determine overall status based on alcohol type requirements
+  const overallStatus = determineOverallStatus(fields, formData.alcoholType);
 
   return {
     overallStatus,
@@ -1162,10 +1162,14 @@ function findFuzzyVolumeMatches(
 }
 
 /**
- * Determines overall status
+ * Determines overall status based on alcohol type requirements
+ * Uses alcohol type-specific required fields per TTB regulations
  */
-function determineOverallStatus(fields: FieldVerification[]): "pass" | "fail" {
-  const required = ["brandName", "productType", "alcoholContent"];
+function determineOverallStatus(
+  fields: FieldVerification[],
+  alcoholType?: string
+): "pass" | "fail" {
+  const required = getRequiredFields(alcoholType);
 
   for (const field of fields) {
     if (required.includes(field.field) && field.status !== "match") {

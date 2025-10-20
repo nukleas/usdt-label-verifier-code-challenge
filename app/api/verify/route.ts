@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       const alcoholType = formData.get("alcoholType") as string;
       const productType = formData.get("productType") as string;
       const alcoholContent = formData.get("alcoholContent") as string;
-      const netContents = (formData.get("netContents") as string) || undefined;
+      const netContents = (formData.get("netContents") as string) || "";
       const imageFile = formData.get("label-image") as File;
 
       // Log form data for monitoring

@@ -22,16 +22,22 @@ describe("Form Validation", () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it("should accept form without optional netContents", () => {
+    it("should reject form without required netContents", () => {
       const result = validateFormData({
         brandName: "ORPHEUS BREWING",
         alcoholType: "beer",
         productType: "IPA",
         alcoholContent: "4%",
+        netContents: "",
         image: new File(["test"], "test.jpg", { type: "image/jpeg" }),
       });
 
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: "netContents",
+        })
+      );
     });
 
     it("should reject missing brand name", () => {
@@ -40,6 +46,7 @@ describe("Form Validation", () => {
         alcoholType: "beer",
         productType: "IPA",
         alcoholContent: "4%",
+        netContents: "12 oz",
         image: new File(["test"], "test.jpg", { type: "image/jpeg" }),
       });
 
@@ -57,6 +64,7 @@ describe("Form Validation", () => {
         alcoholType: "beer",
         productType: "",
         alcoholContent: "4%",
+        netContents: "12 oz",
         image: new File(["test"], "test.jpg", { type: "image/jpeg" }),
       });
 
@@ -74,6 +82,7 @@ describe("Form Validation", () => {
         alcoholType: "",
         productType: "IPA",
         alcoholContent: "4%",
+        netContents: "12 oz",
         image: new File(["test"], "test.jpg", { type: "image/jpeg" }),
       });
 
@@ -91,6 +100,7 @@ describe("Form Validation", () => {
         alcoholType: "invalid-type",
         productType: "IPA",
         alcoholContent: "4%",
+        netContents: "12 oz",
         image: new File(["test"], "test.jpg", { type: "image/jpeg" }),
       });
 
@@ -108,6 +118,7 @@ describe("Form Validation", () => {
         alcoholType: "beer",
         productType: "IPA",
         alcoholContent: "150%", // Invalid: > 95%
+        netContents: "12 oz",
         image: new File(["test"], "test.jpg", { type: "image/jpeg" }),
       });
 
@@ -125,6 +136,7 @@ describe("Form Validation", () => {
         alcoholType: "beer",
         productType: "IPA",
         alcoholContent: "-5%",
+        netContents: "12 oz",
         image: new File(["test"], "test.jpg", { type: "image/jpeg" }),
       });
 
@@ -137,6 +149,7 @@ describe("Form Validation", () => {
         alcoholType: "beer",
         productType: "IPA",
         alcoholContent: "4%",
+        netContents: "12 oz",
         image: null as any,
       });
 
@@ -154,6 +167,7 @@ describe("Form Validation", () => {
         alcoholType: "beer",
         productType: "IPA",
         alcoholContent: "4%",
+        netContents: "12 oz",
         image: new File(["test"], "test.pdf", { type: "application/pdf" }),
       });
 
@@ -174,6 +188,7 @@ describe("Form Validation", () => {
           alcoholType: "beer",
           productType: "IPA",
           alcoholContent: "4%",
+          netContents: "12 oz",
           image: new File(["test"], "test.jpg", { type }),
         });
 
@@ -188,6 +203,7 @@ describe("Form Validation", () => {
         alcoholType: "beer",
         productType: "IPA",
         alcoholContent: "4%",
+        netContents: "12 oz",
         image: new File(["test"], "test.jpg", { type: "image/jpeg" }),
       });
 
@@ -200,6 +216,7 @@ describe("Form Validation", () => {
         alcoholType: "beer",
         productType: "IPA",
         alcoholContent: "4%",
+        netContents: "12 oz",
         image: new File(["test"], "test.jpg", { type: "image/jpeg" }),
       });
 
@@ -208,6 +225,7 @@ describe("Form Validation", () => {
         alcoholType: "beer",
         productType: "IPA",
         alcoholContent: "4",
+        netContents: "12 oz",
         image: new File(["test"], "test.jpg", { type: "image/jpeg" }),
       });
 
@@ -221,6 +239,7 @@ describe("Form Validation", () => {
         alcoholType: "beer",
         productType: "IPA",
         alcoholContent: "4.5%",
+        netContents: "12 oz",
         image: new File(["test"], "test.jpg", { type: "image/jpeg" }),
       });
 

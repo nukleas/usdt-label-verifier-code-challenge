@@ -31,6 +31,8 @@ export default function VerifyPage() {
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [alcoholType, setAlcoholType] = useState<string | undefined>(undefined);
+  const [formKey, setFormKey] = useState(0); // Key to force form remount on reset
 
   /**
    * Handles form submission and verification
@@ -42,6 +44,7 @@ export default function VerifyPage() {
       setError(null);
       setResult(null);
       setImageFile(image); // Store image file for canvas visualization
+      setAlcoholType(formData.alcoholType); // Store alcohol type for field requirements
 
       try {
         // Create FormData for API request
@@ -50,9 +53,7 @@ export default function VerifyPage() {
         body.append("alcoholType", formData.alcoholType);
         body.append("productType", formData.productType);
         body.append("alcoholContent", formData.alcoholContent);
-        if (formData.netContents) {
-          body.append("netContents", formData.netContents);
-        }
+        body.append("netContents", formData.netContents);
         body.append("label-image", image);
 
         // Simulate progress (OCR happens on server)
@@ -97,6 +98,8 @@ export default function VerifyPage() {
     setError(null);
     setProgress(0);
     setImageFile(null);
+    setAlcoholType(undefined);
+    setFormKey((prev) => prev + 1); // Increment key to remount form with fresh state
   }, []);
 
   return (
@@ -143,6 +146,7 @@ export default function VerifyPage() {
             {/* Left Column - Form (Always Visible) */}
             <Grid tablet={{ col: 12 }} desktop={{ col: 6 }}>
               <LabelForm
+                key={formKey}
                 onSubmit={handleSubmit}
                 loading={loading}
                 onReset={handleReset}
@@ -199,6 +203,7 @@ export default function VerifyPage() {
                   result={result}
                   onReset={handleReset}
                   imageFile={imageFile || undefined}
+                  alcoholType={alcoholType}
                 />
               )}
             </Grid>

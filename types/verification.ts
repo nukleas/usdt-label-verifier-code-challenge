@@ -25,8 +25,8 @@ export interface LabelFormData {
   /** Alcohol by volume percentage (e.g., "45", "45%", "45.0") */
   alcoholContent: string;
 
-  /** Optional net contents/volume (e.g., "750 mL", "12 oz") */
-  netContents?: string;
+  /** Net contents/volume (e.g., "750 mL", "12 oz") - Required per 27 CFR 5.70 */
+  netContents: string;
 }
 
 // ============================================================================
@@ -397,6 +397,9 @@ export interface VerificationResultsProps {
 
   /** Optional: Image file for canvas visualization */
   imageFile?: File;
+
+  /** Optional: Alcohol type for determining required fields */
+  alcoholType?: string;
 }
 
 /**

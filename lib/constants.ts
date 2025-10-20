@@ -43,9 +43,9 @@ export const ABV_PERCENTAGE_PATTERN = /(\d+\.?\d*)\s*%/g;
 
 /**
  * Pattern to match "Alc." or "Alcohol" followed by volume
- * Matches: "45 Alc./Vol.", "45.0 Alcohol by Volume"
+ * Matches: "45 Alc./Vol.", "45% Alc./Vol.", "45% ALC/VOL", "45.0 Alcohol by Volume"
  */
-export const ABV_ALCOHOL_PATTERN = /(\d+\.?\d*)\s*(?:Alc|Alcohol)/gi;
+export const ABV_ALCOHOL_PATTERN = /(\d+\.?\d*)\s*%?\s*(?:Alc|Alcohol)/gi;
 
 /**
  * Pattern to match ABV notation
@@ -325,34 +325,51 @@ export const ALCOHOL_TYPE_RULES = {
   "distilled-spirits": {
     minABV: 2.5, // Minimum for liqueurs (flavored distilled spirits)
     maxABV: 95, // Maximum practical ABV
-    requiredFields: ["brandName", "productType", "alcoholContent"],
-    optionalFields: ["netContents"],
+    requiredFields: ["brandName", "productType", "alcoholContent", "netContents"],
+    optionalFields: [],
   },
   beer: {
     minABV: 0.5, // Non-alcoholic beer threshold
     maxABV: 15, // Maximum practical ABV for beer
-    requiredFields: ["brandName", "productType", "alcoholContent"],
-    optionalFields: ["netContents"],
+    requiredFields: ["brandName", "productType", "alcoholContent", "netContents"],
+    optionalFields: [],
   },
   wine: {
     minABV: 0.5, // Minimum ABV for wine
     maxABV: 24, // Maximum ABV for wine
-    requiredFields: ["brandName", "productType", "alcoholContent"],
-    optionalFields: ["netContents"],
+    requiredFields: ["brandName", "productType", "alcoholContent", "netContents"],
+    optionalFields: [],
   },
   "malt-beverage": {
     minABV: 0.5,
     maxABV: 15,
-    requiredFields: ["brandName", "productType", "alcoholContent"],
-    optionalFields: ["netContents"],
+    requiredFields: ["brandName", "productType", "alcoholContent", "netContents"],
+    optionalFields: [],
   },
   cider: {
     minABV: 0.5,
     maxABV: 8.5, // Corrected: cider has lower max ABV
-    requiredFields: ["brandName", "productType", "alcoholContent"],
-    optionalFields: ["netContents"],
+    requiredFields: ["brandName", "productType", "alcoholContent", "netContents"],
+    optionalFields: [],
   },
 } as const;
+
+/**
+ * Helper function to get required fields for a given alcohol type
+ * Per 27 CFR 5.70, net contents is mandatory for all TTB labels
+ *
+ * @param alcoholType - Alcohol type value
+ * @returns Array of required field names
+ */
+export function getRequiredFields(alcoholType?: string): string[] {
+  if (!alcoholType) {
+    // Default required fields if no alcohol type specified
+    return ["brandName", "productType", "alcoholContent", "netContents"];
+  }
+
+  const rules = ALCOHOL_TYPE_RULES[alcoholType as keyof typeof ALCOHOL_TYPE_RULES];
+  return rules ? [...rules.requiredFields] : ["brandName", "productType", "alcoholContent", "netContents"];
+}
 
 // ============================================================================
 // Product Type Variations
