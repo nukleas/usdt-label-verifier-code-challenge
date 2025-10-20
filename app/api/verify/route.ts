@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { processImageServerSide } from "@/lib/ocr-server";
+import { verifyWithLLM } from "@/lib/llm-verifier";
 import { compareFields } from "@/lib/textMatching";
 import { validateFormData } from "@/lib/validation";
 import type { LabelFormData, OCRResult } from "@/types/verification";
@@ -74,11 +74,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Convert File to Buffer for OCR processing
+      // Convert File to Buffer for processing
       const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
-
-      // Process with OCR
-      ocrResult = await processImageServerSide(imageBuffer);
 
       // Build form data object
       labelData = {
@@ -88,6 +85,22 @@ export async function POST(request: NextRequest) {
         alcoholContent,
         netContents,
       };
+
+      // Use Gemini LLM for verification (includes OCR and bounding boxes)
+      const verificationResult = await verifyWithLLM(imageBuffer, labelData);
+
+      // Add metadata
+      verificationResult.processingTime = Date.now() - startTime;
+
+      // Add warnings if OCR confidence is low
+      if (verificationResult.ocrConfidence && verificationResult.ocrConfidence < 70) {
+        verificationResult.warnings = [ERROR_MESSAGES.LOW_CONFIDENCE];
+      }
+
+      return NextResponse.json({
+        success: true,
+        result: verificationResult,
+      });
     } else {
       // Handle JSON data (client-side OCR results)
       const body = await request.json();
@@ -160,24 +173,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Compare fields (pass full OCR result for block-aware matching)
+    // For JSON mode, use original text matching (no LLM since no image)
     const verificationResult = compareFields(labelData, ocrResult);
 
     // Add metadata
     verificationResult.processingTime = Date.now() - startTime;
     verificationResult.ocrConfidence = ocrResult.confidence;
     verificationResult.ocrBlocks = ocrResult.blocks;
-    verificationResult.rawTesseractResult = ocrResult.rawTesseractResult;
-    verificationResult.allRotationResults = ocrResult.allRotationResults;
-    verificationResult.imageWidth = ocrResult.imageWidth;
-    verificationResult.imageHeight = ocrResult.imageHeight;
-    if (typeof ocrResult.rotationAppliedRadians === "number") {
-      verificationResult.ocrRotation = {
-        appliedRadians: ocrResult.rotationAppliedRadians,
-        strategy: ocrResult.rotationStrategy ?? "none",
-        candidatesDegrees: ocrResult.rotationCandidatesDegrees,
-      };
-    }
 
     // Add warnings if OCR confidence is low
     if (ocrResult.confidence < 70) {
