@@ -1,6 +1,6 @@
 # TTB Label Verification App
 
-A web application that verifies alcohol beverage labels against TTB application form data using OCR and text matching algorithms.
+A web application that verifies alcohol beverage labels against TTB application form data using Google's Gemini AI with multimodal vision capabilities.
 
 **Live Demo:** [https://usdt-label-verifier-code-challenge.vercel.app](https://usdt-label-verifier-code-challenge.vercel.app)
 
@@ -8,10 +8,34 @@ A web application that verifies alcohol beverage labels against TTB application 
 
 ```bash
 npm install
+
+# Set up Google AI API key
+cp .env.local.example .env.local
+# Edit .env.local and add your Google AI API key
+
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+Get your free API key from [Google AI Studio](https://aistudio.google.com/app/apikey) (60 requests/min, 1500 requests/day on free tier).
+
+## How It Works
+
+The application uses **Gemini 2.5 Pro**, Google's advanced multimodal AI model, for end-to-end label verification:
+
+1. **Image Analysis**: Gemini's vision capabilities extract text from the label at any orientation
+2. **Intelligent Matching**: The model compares extracted text against form data with contextual understanding
+3. **Bounding Box Detection**: Returns precise coordinates for each detected field on the label
+4. **Structured Output**: Delivers verification results in a consistent JSON format
+
+**Key Benefits:**
+- **Simple Architecture**: Single API call handles OCR, text extraction, and verification
+- **High Accuracy**: Native support for rotated text, contextual understanding, and OCR error correction
+- **Visual Feedback**: Bounding boxes highlight detected fields on the label
+- **Easy Maintenance**: Update behavior by modifying prompts, not code
+
+---
 
 ## Features Implemented
 
@@ -19,7 +43,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 - Web form for TTB label application data (brand name, product type, alcohol content, net contents)
 - Image upload with validation (JPEG, PNG, WebP up to 5MB)
-- Server-side OCR using Tesseract.js
+- AI-powered vision and OCR using Gemini 2.5 Pro
 - Text extraction and comparison with form data
 - Verification results with match/mismatch status
 - Government warning detection
@@ -27,102 +51,91 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ### Bonus Features
 
-- **Multi-rotation OCR**: Processes images at 0°, 90°, 180°, 270° to detect vertical/sideways text (common on label sides for government warnings)
-- **Visual bounding boxes**: Canvas overlay showing where each field was detected on the label
-- **Alcohol type validation**: Type-specific ABV ranges (e.g., cider 0.5-8.5%, spirits 2.5-95%)
-- **Automated testing**: 78 passing tests covering text matching, OCR integration, and validation logic
+- **Visual Bounding Boxes**: Canvas overlay showing precise locations where each field was detected
+- **Multi-Orientation Support**: Handles text at any angle (0°, 90°, 180°, 270°) including vertical government warnings
+- **Alcohol Type Validation**: Type-specific ABV ranges (e.g., cider 0.5-8.5%, spirits 2.5-95%)
+- **Fuzzy Matching**: Tolerates OCR variations and formatting differences
 - **Accessible UI**: WCAG 2.1 AA compliant using USWDS design system
 
 ## Technology Choices
 
 **Next.js 15 + TypeScript**
 
-- Server-side OCR keeps client bundle small
+- Server-side processing keeps client bundle small
 - API routes provide backend without separate server setup
-- TypeScript ensures type safety
+- TypeScript ensures type safety across the stack
 
-**Tesseract.js**
+**Google Gemini 2.5 Pro**
 
-- Open source OCR with no API costs or rate limits
-- Processes printed text using LSTM neural network
-- Runs server-side in Node.js
+- Multimodal AI with advanced vision and OCR capabilities
+- Native bounding box detection for visual feedback
+- Handles text at any orientation without preprocessing
+- Single API call (~20-25 seconds) for complete verification
+- Cost-effective: ~$0.001 per verification (free tier: 1500/day)
 
 **US Web Design System (USWDS)**
 
 - Government-standard design appropriate for TTB simulation
-- Built-in accessibility compliance
+- Built-in accessibility compliance (WCAG 2.1 AA)
 - Professional appearance without custom design work
 
 ## Implementation Approach
 
-### OCR Processing
+### AI-Powered Verification
 
-The main challenge was handling text at various orientations on a single label. Government warnings are often printed vertically on label sides, which standard OCR misses.
+The application uses Gemini 2.5 Pro's multimodal capabilities for comprehensive label analysis:
 
-Solution: Process each image at four rotations (0°, 90°, 180°, 270°), select the best primary orientation based on word count and confidence, then merge text from all rotations. This allows detecting both horizontal brand names and vertical warnings on the same label.
+**Prompt Engineering**
 
-### Text Matching Algorithms
+A structured prompt instructs the model to:
+- Extract all text from the label image (handles any orientation natively)
+- Compare extracted values against expected form data
+- Apply TTB-specific validation rules (tolerances, format variations)
+- Return structured JSON with verification results and bounding boxes
 
-Each field uses different matching strategies based on TTB requirements:
+**Matching Rules Encoded in Prompt**
 
-**Brand Name**
+- **Brand Name**: Case-insensitive exact match
+- **Product Type**: Exact match with common variations
+- **Alcohol Content**: ±0.5% exact tolerance, ±2% loose tolerance, handles "ABV", "Alc./Vol.", and "Proof" formats
+- **Net Contents**: 2% volume tolerance, unit conversion (mL, oz, L)
+- **Government Warning**: Phrase detection ("GOVERNMENT WARNING", "Surgeon General", "pregnancy", etc.), requires 60% match
 
-- Exact substring match (case-insensitive)
-- Fuzzy match using Levenshtein distance (80% threshold)
-- Word-by-word matching for partial matches
-- Prefers larger text near top of label for bounding box detection
+**Bounding Box Detection**
 
-**Alcohol Content**
+Gemini returns bounding boxes in normalized coordinates [ymin, xmin, ymax, xmax] on a 0-1000 scale:
+1. Model identifies text regions for each field
+2. Coordinates are scaled to actual image dimensions
+3. Frontend renders boxes on canvas overlay with field-specific colors
 
-- Priority 1: "Alc./Vol." patterns (official TTB format)
-- Priority 2: "ABV" patterns
-- Priority 3: Proof conversion (Proof ÷ 2 = ABV)
-- Priority 4: Generic percentage patterns with range validation
-- ±0.5% tolerance for exact match, ±2% for loose match
+**Performance**
 
-**Net Contents**
-
-- Unit conversion (mL, oz, L → common unit)
-- 2% volume tolerance for manufacturing variance
-- Handles formats like "750ml", "750 mL", "12 oz", "12 FL OZ"
-
-**Government Warning**
-
-- Detects required phrases: "GOVERNMENT WARNING", "Surgeon General", "pregnancy", "birth defects", "impairs", "health problems"
-- At least 60% of phrases must be present
-- Cross-rotation detection for vertical text
-
-### Bounding Box Visualization
-
-Tesseract provides word-level coordinates. The system:
-
-1. Extracts text with bounding boxes from all rotations
-2. Matches text patterns and collects corresponding boxes
-3. Merges adjacent boxes for multi-word phrases
-4. Transforms coordinates from rotated space back to original orientation
-5. Renders highlights on canvas overlay
+- ~20-25 seconds per verification (primarily model inference time)
+- Gemini 2.5 Pro significantly outperforms Flash for complex prompts with vision + reasoning
+- Benchmark: Pro is 47.5% faster than Flash for this task (23s vs 45s)
 
 ## Testing
 
 ```bash
-npm test              # Run all 78 tests
+npm test              # Run test suite
 npm run test:watch    # Watch mode for development
+
+# Performance benchmarking
+npx tsx scripts/race-models.ts    # Compare Gemini Pro vs Flash
 ```
 
 Test coverage includes:
 
-- Text matching algorithms (exact, fuzzy, pattern-based)
-- Levenshtein distance calculations
-- Bounding box merging and deduplication
 - Form validation with alcohol type-specific rules
-- OCR integration with sample label images
+- Text matching fallback logic (for legacy mode)
+- Bounding box coordinate transformations
 - End-to-end verification flow
 
 Sample test images in `__tests__/labels/`:
 
 - Distilled spirits with vertical government warning
-- Import label with multi-line text
-- Beer label testing rotation detection
+- Import labels with multi-line text
+- Beer labels at various orientations
 
 ## Configuration
 
@@ -151,7 +164,7 @@ export const DEFAULT_MATCHING_CONFIG = {
 
 ```
 app/
-├── api/verify/route.ts          # OCR verification endpoint
+├── api/verify/route.ts          # AI verification endpoint
 ├── verify/page.tsx              # Main verification page
 └── page.tsx                     # Landing page
 
@@ -162,17 +175,16 @@ components/verification/
 └── LabelCanvas.tsx              # Bounding box visualization
 
 lib/
-├── ocr-server.ts                # Multi-rotation OCR processing
-├── textMatching.ts              # Matching algorithms
-├── bboxMatching.ts              # Bounding box utilities
+├── llm-verifier.ts              # Gemini 2.5 Pro integration
+├── prompts.ts                   # Verification prompt templates
 ├── validation.ts                # Input validation with type-specific rules
 └── constants.ts                 # TTB requirements and config
 
+scripts/
+└── race-models.ts               # Performance benchmarking tool
+
 __tests__/
-├── textMatching.test.ts         # Core matching logic tests
-├── bboxMatching.test.ts         # Bounding box tests
 ├── validation.test.ts           # Validation tests
-├── ocr-server.test.ts           # OCR integration tests
 └── labels/                      # Sample test images
 ```
 
@@ -243,36 +255,47 @@ Response:
 
 Deployed to Vercel with automatic deployments on push:
 
-- No environment variables required (self-contained)
-- Tesseract.js WASM files included in bundle via `next.config.ts`
-- Server-side rendering for OCR processing
+- Requires `GOOGLE_GENAI_API_KEY` environment variable
+- Server-side API routes handle Gemini integration
+- Optimized for serverless functions
 
 ```bash
 npm run build    # Production build
 npm start        # Start server
 ```
 
+Set environment variables in Vercel dashboard:
+```
+GOOGLE_GENAI_API_KEY=your_api_key_here
+```
+
 ## Design Decisions
 
-**Why server-side OCR?**
+**Why Gemini 2.5 Pro over traditional OCR?**
 
-- Smaller client bundle (Tesseract not shipped to browser)
-- Consistent Node.js environment
-- Better performance using server CPU
-- Trade-off: Slight network latency (acceptable for ~2-3 second processing time)
+- **Simplicity**: Single API call vs complex multi-step pipeline
+- **Accuracy**: Native multi-orientation support, contextual understanding, OCR error correction
+- **Maintainability**: Update behavior via prompts instead of code
+- **Bounding Boxes**: Native region detection without complex coordinate transformations
+- **Trade-off**: Requires internet connection and API key, ~20-25 second latency
 
-**Why multi-rotation processing?**
+**Why Pro instead of Flash?**
 
-- Real-world labels have vertical text (especially government warnings)
-- Standard OCR at 0° misses 90° text entirely
-- Processing all rotations and merging results catches text at any orientation
-- Adds ~1 second to processing time but significantly improves accuracy
+- Benchmark testing showed Pro is 47.5% faster for this complex vision + reasoning task (23s vs 45s)
+- Flash is optimized for simple, high-volume tasks; Pro excels at complex prompts
+- Pro provides more accurate bounding boxes
+
+**Why server-side processing?**
+
+- Protects API keys from client exposure
+- Consistent environment for image processing
+- Smaller client bundle
 
 **Why USWDS?**
 
-- Appropriate for government application simulation
+- Appropriate design system for government application simulation
 - Accessibility built-in (WCAG 2.1 AA compliant)
-- Professional appearance without design work
+- Professional appearance without custom design work
 
 ## Documentation
 
@@ -283,4 +306,4 @@ npm start        # Start server
 
 ---
 
-**Tech Stack:** Next.js 15 • TypeScript 5 • Tesseract.js 6 • USWDS 3.13 • Jest • Vercel
+**Tech Stack:** Next.js 15 • TypeScript 5 • Google Gemini 2.5 Pro • USWDS 3.13 • Vercel
