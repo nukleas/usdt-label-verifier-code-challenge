@@ -145,10 +145,13 @@ export function useClientOCR(): UseClientOCRReturn {
           const rotatedImage =
             angle === 0 ? imageFile : await rotateImage(imageFile, angle);
 
-          // Run OCR
+          // Run OCR with character whitelist
           const result = await worker.recognize(
             rotatedImage,
-            {},
+            {
+              tessedit_char_whitelist:
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:;()%/",
+            } as Record<string, string>,
             { blocks: true }
           );
 

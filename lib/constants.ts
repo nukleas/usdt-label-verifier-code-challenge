@@ -67,10 +67,10 @@ export const VOLUME_ML_PATTERN = /(\d+\.?\d*)\s*(?:ml|mL|ML|milliliters?)/gi;
 
 /**
  * Pattern to match volume in ounces
- * Matches: "12 oz", "12 OZ", "12 fl oz", "12 FL.OZ.", "12 fl. oz", "12 ounces"
+ * Matches: "12 oz", "12 OZ", "12 fl oz", "12 FL.OZ.", "12 fl. oz", "12 ounces", "12 FLUID OZ"
  */
 export const VOLUME_OZ_PATTERN =
-  /(\d+\.?\d*)\s*(?:fl\.?\s*oz\.?|FL\.?\s*OZ\.?|oz\.?|OZ\.?|ounces?)/gi;
+  /(\d+\.?\d*)\s*(?:fl\.?\s*oz\.?|FL\.?\s*OZ\.?|FLUID\s*OZ\.?|oz\.?|OZ\.?|ounces?)/gi;
 
 /**
  * Pattern to match volume in liters
@@ -232,7 +232,7 @@ export const ALCOHOL_TYPES = [
     value: "cider",
     label: "Cider",
     description: "Fermented apple or other fruit beverages",
-    examples: ["Hard Cider", "Apple Cider", "Pear Cider"],
+    examples: ["Hard Cider", "Hard Apple Cider", "Pear Cider"],
   },
 ] as const;
 
@@ -307,7 +307,7 @@ export const PRODUCT_TYPE_OPTIONS = {
   ],
   cider: [
     "Hard Cider",
-    "Apple Cider",
+    "Hard Apple Cider",
     "Pear Cider",
     "Perry",
     "Fruit Cider",
@@ -335,7 +335,7 @@ export const ALCOHOL_TYPE_RULES = {
     optionalFields: ["netContents"],
   },
   wine: {
-    minABV: 7, // Minimum ABV for wine
+    minABV: 0.5, // Minimum ABV for wine
     maxABV: 24, // Maximum ABV for wine
     requiredFields: ["brandName", "productType", "alcoholContent"],
     optionalFields: ["netContents"],

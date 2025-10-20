@@ -85,7 +85,10 @@ export class OCRProcessor {
       // Run Tesseract OCR with blocks output enabled to get word-level data
       const result = await worker.recognize(
         rotatedBuffer,
-        {},
+        {
+          tessedit_char_whitelist:
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:;()%/",
+        } as Record<string, string>,
         { blocks: true }
       );
 
@@ -192,8 +195,15 @@ export class OCRProcessor {
       imageHeight = image.bitmap.height;
     }
 
-    // Run OCR with blocks output enabled
-    const result = await worker.recognize(processBuffer, {}, { blocks: true });
+    // Run OCR with blocks output enabled and character whitelist
+    const result = await worker.recognize(
+      processBuffer,
+      {
+        tessedit_char_whitelist:
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:;()%/",
+      } as Record<string, string>,
+      { blocks: true }
+    );
 
     const text = result.data.text || "";
     const words = this.extractWordsFromBlocks(result.data.blocks || []);

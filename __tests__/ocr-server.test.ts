@@ -2,12 +2,13 @@
  * Test for improved orientation selection logic and singleton pattern
  */
 
+import { RotationAttempt } from "@/lib/ocr-core";
 import {
   ServerOCRProcessor,
   getServerOCRProcessor,
   resetServerOCRProcessor,
 } from "../lib/ocr-server";
-
+import { OCRResult, TextBlock } from "@/types/verification";
 describe("ServerOCRProcessor Orientation Selection", () => {
   let processor: ServerOCRProcessor;
 
@@ -29,11 +30,11 @@ describe("ServerOCRProcessor Orientation Selection", () => {
         ],
         confidence: 80,
         wordCount: 5,
-        rawResult: {},
-      };
+        rawResult: { text: "Test Brand Name 4% Alcohol" } as any,
+      } as RotationAttempt;
 
       // Access private method for testing
-      const score = (processor as any).calculateOrientationScore(attempt);
+      const score = processor.calculateOrientationScore(attempt);
 
       // Base score should be wordCount * (confidence/100) = 5 * 0.8 = 4.0
       // Plus pattern validation bonus (valid words should get bonus)
@@ -42,19 +43,27 @@ describe("ServerOCRProcessor Orientation Selection", () => {
     });
 
     it("should penalize noisy text patterns", () => {
-      const attempt = {
+      const attempt: RotationAttempt = {
         angle: 90,
         text: "a b c d e f g h i j k l m n o p q r s t u v w x y z",
-        blocks: Array.from({ length: 26 }, (_, i) => ({
-          text: String.fromCharCode(97 + i), // a, b, c, etc.
-          confidence: 30,
-        })),
+        blocks: Array.from(
+          { length: 26 },
+          (_, i) =>
+            ({
+              text: String.fromCharCode(97 + i), // a, b, c, etc.
+              confidence: 30,
+              bbox: { x0: 0, y0: 0, x1: 10, y1: 10 },
+            } as TextBlock)
+        ),
         confidence: 30,
         wordCount: 26,
-        rawResult: {},
+        rawResult: {
+          text: "a b c d e f g h i j k l m n o p q r s t u v w x y z",
+          confidence: 30,
+        },
       };
 
-      const score = (processor as any).calculateOrientationScore(attempt);
+      const score = processor.calculateOrientationScore(attempt);
 
       // Should have lower score compared to high-quality text
       expect(score).toBeLessThan(20.0);

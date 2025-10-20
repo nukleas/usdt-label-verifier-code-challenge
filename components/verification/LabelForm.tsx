@@ -225,9 +225,14 @@ export default function LabelForm({
         </Label>
         <span className="usa-hint">
           {formData.alcoholType
-            ? `Enter the specific type of ${ALCOHOL_TYPES.find(
-                (t) => t.value === formData.alcoholType
-              )?.label.toLowerCase()}`
+            ? (() => {
+                const alcoholType = ALCOHOL_TYPES.find(
+                  (t) => t.value === formData.alcoholType
+                );
+                return `Enter the specific type of ${
+                  alcoholType?.label?.toLowerCase() ?? formData.alcoholType
+                }`;
+              })()
             : "Select an alcohol type first to see available options"}
         </span>
         {errors.productType && (
@@ -271,7 +276,7 @@ export default function LabelForm({
             id="productType"
             name="productType"
             type="text"
-            value=""
+            value={formData.productType || ""}
             onChange={handleChange}
             disabled={true}
             placeholder="Select an alcohol type first"
@@ -289,9 +294,11 @@ export default function LabelForm({
           {formData.alcoholType
             ? `Enter as percentage (${getABVRange().min}%-${
                 getABVRange().max
-              }% range for ${ALCOHOL_TYPES.find(
-                (t) => t.value === formData.alcoholType
-              )?.label.toLowerCase()})`
+              }% range for ${
+                ALCOHOL_TYPES.find(
+                  (t) => t.value === formData.alcoholType
+                )?.label?.toLowerCase() ?? "selected type"
+              })`
             : "Enter as percentage (e.g., 45 or 45%)"}
         </span>
         {errors.alcoholContent && (

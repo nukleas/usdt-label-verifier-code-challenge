@@ -1,257 +1,184 @@
 # TTB Label Verification App
 
-Automated Alcohol Label Verification System for TTB Compliance
+A web application that verifies alcohol beverage labels against TTB application form data using OCR and text matching algorithms.
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
-[![USWDS](https://img.shields.io/badge/USWDS-3.13-005ea2)](https://designsystem.digital.gov/)
-[![Tesseract.js](https://img.shields.io/badge/Tesseract.js-6.0-green)](https://tesseract.projectnaptha.com/)
+**Live Demo:** [https://usdt-label-verifier-code-challenge.vercel.app](https://usdt-label-verifier-code-challenge.vercel.app)
 
-## Overview
+## Quick Start
 
-This application simulates a simplified version of the **Alcohol and Tobacco Tax and Trade Bureau (TTB)** label approval process. It uses OCR (Optical Character Recognition) and text matching algorithms to verify that information on an alcohol label matches the data submitted in an application form.
+```bash
+npm install
+npm run dev
+```
 
-**Live Demo:** [Deployed URL](#) _(Add your Vercel URL here)_
+Open [http://localhost:3000](http://localhost:3000)
 
-## Features
+## Features Implemented
 
-### Core Features (Required)
+### Core Requirements
+- Web form for TTB label application data (brand name, product type, alcohol content, net contents)
+- Image upload with validation (JPEG, PNG, WebP up to 5MB)
+- Server-side OCR using Tesseract.js
+- Text extraction and comparison with form data
+- Verification results with match/mismatch status
+- Government warning detection
+- Error handling for unreadable images and validation failures
 
-✅ **Form Input:** USWDS-compliant form for entering label information
-✅ **Image Upload:** Drag-and-drop or file selection with preview
-✅ **OCR Processing:** Tesseract.js for server-side text extraction
-✅ **Fuzzy Matching:** Text comparison algorithms with configurable thresholds
-✅ **Detailed Results:** Field-by-field verification with confidence scores
-✅ **Government Warning Detection:** Checks TTB-required warning text
-✅ **Error Handling:** Graceful handling of unreadable images, missing fields
+### Bonus Features
+- **Multi-rotation OCR**: Processes images at 0°, 90°, 180°, 270° to detect vertical/sideways text (common on label sides for government warnings)
+- **Visual bounding boxes**: Canvas overlay showing where each field was detected on the label
+- **Alcohol type validation**: Type-specific ABV ranges (e.g., cider 0.5-8.5%, spirits 2.5-95%)
+- **Automated testing**: 78 passing tests covering text matching, OCR integration, and validation logic
+- **Accessible UI**: WCAG 2.1 AA compliant using USWDS design system
 
-### Bonus Features (Extras)
+## Technology Choices
 
-🌟 **Multi-Rotation OCR:** Automatically tries 0°, 90°, 180°, 270° rotations to detect vertical/sideways text
-🌟 **Bounding Box Highlighting:** Visual canvas overlay showing where each field was detected on the label
-🌟 **Word-Level Analysis:** Enhanced alcohol content matching using word-level confidence scores
-🌟 **Coordinate Transformation:** Transforms bounding boxes from rotated orientations back to original image coordinates
-🌟 **TypeScript:** Full type safety with comprehensive interfaces
-🌟 **Jest Tests:** 76 passing tests covering core matching logic
-🌟 **Accessible Design:** WCAG 2.1 AA compliant using USWDS
-🌟 **Responsive Layout:** Mobile-first design that works on all devices
+**Next.js 15 + TypeScript**
+- Server-side OCR keeps client bundle small
+- API routes provide backend without separate server setup
+- TypeScript ensures type safety across 2,500+ lines of code
 
-## Technology Stack
+**Tesseract.js**
+- Open source OCR with no API costs or rate limits
+- Good accuracy for printed labels (90%+ confidence typical)
+- Runs server-side in Node.js
 
-### Frontend
+**US Web Design System (USWDS)**
+- Government-standard design appropriate for TTB simulation
+- Built-in accessibility compliance
+- Professional appearance without custom design work
 
-- **Framework:** Next.js 15 (App Router)
-- **Language:** TypeScript 5
-- **UI Library:** US Web Design System (USWDS) 3.13
-- **Components:** @trussworks/react-uswds 10.0
-- **Styling:** SASS with USWDS design tokens
+## Implementation Approach
 
-### Backend
+### OCR Processing
 
-- **Runtime:** Next.js API Routes (Node.js)
-- **OCR Engine:** Tesseract.js 6.0
-- **Image Processing:** Browser File API + FormData
+The main challenge was handling text at various orientations on a single label. Government warnings are often printed vertically on label sides, which standard OCR misses.
 
-### Deployment
+Solution: Process each image at four rotations (0°, 90°, 180°, 270°), select the best primary orientation based on word count and confidence, then merge text from all rotations. This allows detecting both horizontal brand names and vertical warnings on the same label.
 
-- **Platform:** Vercel (recommended)
-- **CI/CD:** Automatic deployments via Git
+### Text Matching Algorithms
+
+Each field uses different matching strategies based on TTB requirements:
+
+**Brand Name**
+- Exact substring match (case-insensitive)
+- Fuzzy match using Levenshtein distance (80% threshold)
+- Word-by-word matching for partial matches
+- Prefers larger text near top of label for bounding box detection
+
+**Alcohol Content**
+- Priority 1: "Alc./Vol." patterns (official TTB format)
+- Priority 2: "ABV" patterns
+- Priority 3: Proof conversion (Proof ÷ 2 = ABV)
+- Priority 4: Generic percentage patterns with range validation
+- ±0.5% tolerance for exact match, ±2% for loose match
+
+**Net Contents**
+- Unit conversion (mL, oz, L → common unit)
+- 2% volume tolerance for manufacturing variance
+- Handles formats like "750ml", "750 mL", "12 oz", "12 FL OZ"
+
+**Government Warning**
+- Detects required phrases: "GOVERNMENT WARNING", "Surgeon General", "pregnancy", "birth defects", "impairs", "health problems"
+- At least 60% of phrases must be present
+- Cross-rotation detection for vertical text
+
+### Bounding Box Visualization
+
+Tesseract provides word-level coordinates. The system:
+1. Extracts text with bounding boxes from all rotations
+2. Matches text patterns and collects corresponding boxes
+3. Merges adjacent boxes for multi-word phrases
+4. Transforms coordinates from rotated space back to original orientation
+5. Renders highlights on canvas overlay
+
+## Testing
+
+```bash
+npm test              # Run all 78 tests
+npm run test:watch    # Watch mode for development
+```
+
+Test coverage includes:
+- Text matching algorithms (exact, fuzzy, pattern-based)
+- Levenshtein distance calculations
+- Bounding box merging and deduplication
+- Form validation with alcohol type-specific rules
+- OCR integration with sample label images
+- End-to-end verification flow
+
+Sample test images in `__tests__/labels/`:
+- Distilled spirits with vertical government warning
+- Import label with multi-line text
+- Beer label testing rotation detection
+
+## Configuration
+
+Matching thresholds in `lib/constants.ts`:
+
+```typescript
+export const DEFAULT_MATCHING_CONFIG = {
+  brandName: {
+    fuzzyMatchThreshold: 80,  // 80% similarity required
+    wordMatchThreshold: 75,   // 75% of words must match
+  },
+  productType: {
+    fuzzyMatchThreshold: 70,  // More lenient for variations
+  },
+  alcoholContent: {
+    exactTolerance: 0.5,      // ±0.5% for exact match
+    looseTolerance: 2.0,      // ±2% flags as mismatch but acknowledges detection
+  },
+  netContents: {
+    volumeTolerance: 0.02,    // 2% variance allowed
+  },
+};
+```
 
 ## Project Structure
 
 ```
-atf-app/
-├── app/
-│   ├── api/verify/          # OCR API endpoint
-│   ├── verify/              # Main verification page
-│   ├── layout.tsx           # Root layout
-│   ├── page.tsx             # Landing page
-│   ├── globals.css          # Global styles
-│   └── uswds.css           # USWDS styles
-├── components/
-│   └── verification/
-│       ├── LabelForm.tsx           # Form input component
-│       ├── ImageUpload.tsx         # Image upload with preview
-│       ├── VerificationResults.tsx # Results display
-│       ├── FieldVerification.tsx   # Individual field status
-│       ├── LoadingState.tsx        # Progress indicator
-│       └── LabelCanvas.tsx         # Bounding box visualization (bonus)
-├── lib/
-│   ├── ocr.ts              # Tesseract wrapper (main entry)
-│   ├── ocr-core.ts         # Multi-rotation OCR logic (bonus)
-│   ├── textMatching.ts     # Matching algorithms + bbox detection
-│   ├── bboxMatching.ts     # Bounding box utilities (bonus)
-│   ├── validation.ts       # Input validation
-│   └── constants.ts        # TTB requirements & config
-├── __tests__/              # Jest test suite
-│   ├── lib/                # Unit tests (76 tests)
-│   └── labels/             # Sample test images
-├── types/
-│   └── verification.ts     # TypeScript definitions
-├── docs/                   # Documentation
-│   ├── alcohol-type-requirements.md
-│   ├── project-requirements.md
-│   ├── project-alignment-analysis.md
-│   └── ds-labeling-checklist.pdf
-└── public/                 # Static assets
+app/
+├── api/verify/route.ts          # OCR verification endpoint
+├── verify/page.tsx              # Main verification page
+└── page.tsx                     # Landing page
+
+components/verification/
+├── LabelForm.tsx                # Form with alcohol type dropdown
+├── ImageUpload.tsx              # Drag-and-drop with preview
+├── VerificationResults.tsx      # Results display
+└── LabelCanvas.tsx              # Bounding box visualization
+
+lib/
+├── ocr-server.ts                # Multi-rotation OCR processing
+├── textMatching.ts              # Matching algorithms
+├── bboxMatching.ts              # Bounding box utilities
+├── validation.ts                # Input validation with type-specific rules
+└── constants.ts                 # TTB requirements and config
+
+__tests__/
+├── textMatching.test.ts         # Core matching logic tests
+├── bboxMatching.test.ts         # Bounding box tests
+├── validation.test.ts           # Validation tests
+├── ocr-server.test.ts           # OCR integration tests
+└── labels/                      # Sample test images
 ```
 
-## Getting Started
+## API
 
-### Prerequisites
+**POST /api/verify**
 
-- Node.js 20+ or Bun
-- pnpm, npm, or yarn
-
-### Installation
-
-1. **Clone the repository**
-
-```bash
-git clone <your-repo-url>
-cd atf-app
+Request (multipart/form-data):
+```
+brandName: "Old Tom Distillery"
+alcoholType: "distilled-spirits"
+productType: "Kentucky Straight Bourbon Whiskey"
+alcoholContent: "45"
+netContents: "750 mL"
+image: <File>
 ```
 
-2. **Install dependencies**
-
-```bash
-pnpm install
-# or
-npm install
-# or
-yarn install
-```
-
-3. **Run the development server**
-
-```bash
-pnpm dev
-# or
-npm run dev
-# or
-yarn dev
-```
-
-4. **Open in browser**
-
-Navigate to [http://localhost:3000](http://localhost:3000)
-
-### Build for Production
-
-```bash
-pnpm build
-pnpm start
-```
-
-## Usage
-
-### 1. Navigate to Verification Page
-
-Click "Get Started" on the landing page or go directly to `/verify`
-
-### 2. Enter Label Information
-
-Fill in the form with information from your alcohol label:
-
-- **Brand Name** (required): e.g., "Old Tom Distillery"
-- **Product Type** (required): e.g., "Kentucky Straight Bourbon Whiskey"
-- **Alcohol Content** (required): e.g., "45" or "45%"
-- **Net Contents** (optional): e.g., "750 mL"
-
-### 3. Upload Label Image
-
-- Select or drag-and-drop an image of the alcohol label
-- Accepted formats: JPEG, PNG, WebP
-- Maximum size: 5 MB
-- Recommended: Clear, well-lit images with minimal glare
-
-### 4. Verify Label
-
-Click "Verify Label" button. The system will:
-
-1. Validate your inputs
-2. Process the image with OCR
-3. Extract text from the label
-4. Compare extracted text with form data
-5. Display verification results
-
-### 5. Review Results
-
-Check the verification results:
-
-- ✓ **Match:** Field matches label (green)
-- ✗ **Mismatch:** Field doesn't match (red)
-- ⚠ **Not Found:** Field not detected on label (yellow)
-
-## How It Works
-
-### OCR Processing
-
-The application uses **Tesseract.js** with **multi-rotation processing** (bonus feature):
-
-1. User uploads an image
-2. Server receives the image via API
-3. **Multi-Rotation OCR:** System processes the image at 4 orientations (0°, 90°, 180°, 270°)
-4. Selects the rotation with highest confidence as the primary orientation
-5. Extracts word-level text with bounding box coordinates
-6. Transforms coordinates back to original orientation for visual highlighting
-
-### Text Matching Algorithms
-
-The system uses multiple strategies to match form data with OCR text:
-
-#### 1. Brand Name Matching
-
-- **Exact match:** Case-insensitive substring search
-- **Fuzzy match:** Levenshtein distance (80% threshold)
-- **Word matching:** At least 75% of words must match
-
-#### 2. Product Type Matching
-
-- **Substring match:** Handles variations like "Bourbon" vs "Bourbon Whiskey"
-- **Product variations:** Recognizes common synonyms (IPA, India Pale Ale, etc.)
-- **Fuzzy match:** 70% similarity threshold
-
-#### 3. Alcohol Content Matching
-
-- **Pattern extraction:** Finds "45%", "45 Alc./Vol.", "90 Proof"
-- **Proof conversion:** Automatically converts proof to ABV (Proof / 2)
-- **Tolerance:** ±0.5% for exact match, ±2% for loose match
-
-#### 4. Net Contents Matching
-
-- **Unit conversion:** Converts mL, oz, L to common unit
-- **Volume tolerance:** 2% variance allowed
-- **Format flexibility:** Handles "750ml", "750 mL", "750 ML"
-
-#### 5. Government Warning Detection (Bonus)
-
-- Checks for required phrases: "GOVERNMENT WARNING", "Surgeon General", etc.
-- At least 60% of key phrases must be present
-- Partial matches flagged as warnings
-
-## API Documentation
-
-### POST /api/verify
-
-Verifies an alcohol label against form data.
-
-**Request:**
-
-- Method: `POST`
-- Content-Type: `multipart/form-data`
-
-**Parameters:**
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `brandName` | string | Yes | Brand name |
-| `productType` | string | Yes | Product class/type |
-| `alcoholContent` | string | Yes | ABV percentage |
-| `netContents` | string | No | Volume |
-| `image` | File | Yes | Label image |
-
-**Response:**
-
+Response:
 ```json
 {
   "success": true,
@@ -274,242 +201,65 @@ Verifies an alcohol label against form data.
 }
 ```
 
-**Error Response:**
+## Assumptions & Limitations
 
-```json
-{
-  "success": false,
-  "error": "Validation error",
-  "details": {
-    "field": "image",
-    "message": "Image file is required"
-  }
-}
-```
+**Assumptions:**
+- Images are reasonably clear and well-lit (tested with typical label photos)
+- English text only
+- Standard image formats (JPEG, PNG, WebP)
+- No database needed (stateless verification)
 
-## Configuration
+**Limitations:**
+- OCR accuracy depends on image quality (typical 85-95% confidence)
+- No batch processing (one label at a time)
+- Government warning detection checks for key phrases, not exact word-for-word match (as specified in requirements)
+- No image preprocessing (contrast enhancement, de-skewing)
 
-### Matching Thresholds
-
-Adjust matching sensitivity in `/lib/constants.ts`:
-
-```typescript
-export const DEFAULT_MATCHING_CONFIG = {
-  brandName: {
-    fuzzyMatchThreshold: 80, // 80% similarity
-    wordMatchThreshold: 75, // 75% of words must match
-  },
-  productType: {
-    fuzzyMatchThreshold: 70, // 70% similarity
-  },
-  alcoholContent: {
-    exactTolerance: 0.5, // ±0.5%
-    looseTolerance: 2.0, // ±2.0%
-  },
-  netContents: {
-    volumeTolerance: 0.02, // 2%
-  },
-};
-```
-
-### OCR Settings
-
-Modify Tesseract configuration in `/lib/constants.ts`:
-
-```typescript
-export const DEFAULT_OCR_CONFIG = {
-  language: "eng", // English
-  oem: 3, // Default OCR engine mode
-  psm: 3, // Automatic page segmentation
-  preserveInterwordSpaces: true,
-};
-```
-
-## Key Implementation Details
-
-### Bonus Feature: Multi-Rotation OCR
-
-To handle **vertical or sideways text** (common on labels, especially government warnings):
-
-- OCR processes image at 4 orientations: 0°, 90°, 180°, 270°
-- Selects rotation with highest word confidence as primary
-- Keeps all rotation results for cross-orientation text detection (e.g., vertical warning on side)
-- Transforms bounding box coordinates from rotated space back to original image orientation
-- Enables detection of text in any orientation on a single label
-
-### Bonus Feature: Bounding Box Visual Highlighting
-
-- Tesseract provides word-level bounding boxes (x0, y0, x1, y1 coordinates)
-- System traverses Tesseract's tree structure (blocks → paragraphs → lines → words)
-- Matches text patterns and extracts corresponding bounding boxes
-- Merges adjacent boxes for multi-word phrases (e.g., "GOVERNMENT WARNING")
-- Renders highlighted regions on canvas overlay for visual feedback
-
-## Design Decisions
-
-### Why Next.js App Router?
-
-- **Server Components:** Reduced client bundle size
-- **API Routes:** Built-in backend without separate server
-- **File-based Routing:** Intuitive project structure
-- **Vercel Optimized:** Best deployment experience
-
-### Why Server-Side OCR?
-
-✅ **Pros:**
-
-- Smaller client bundle (Tesseract not in browser)
-- Better performance using server CPU
-- Consistent Node.js environment
-- No CORS issues
-
-❌ **Cons:**
-
-- Slight network latency (acceptable)
-- Server resource usage (minimal for expected load)
-
-### Why USWDS?
-
-- **Government Standard:** Professional, trustworthy appearance
-- **Accessibility:** WCAG 2.1 AA compliant by default
-- **Design Tokens:** Consistent theming system
-- **Mobile-First:** Responsive out of the box
-
-### Why Tesseract.js?
-
-- **Free & Open Source:** No API costs
-- **JavaScript Native:** Works in Node.js
-- **Good Accuracy:** Sufficient for printed labels
-- **Self-Contained:** No external dependencies
-
-## Testing
-
-### Run Tests
-
-```bash
-pnpm test        # Run all tests
-pnpm test:watch  # Watch mode
-pnpm test:coverage # Coverage report
-```
-
-**Test Suite:** 76 passing tests covering:
-
-- Text matching algorithms (exact, fuzzy, pattern-based)
-- Bounding box detection and merging
-- Form validation
-- OCR integration with multi-rotation
-- Component rendering
-
-### Test Label Images
-
-Sample test images are included in `__tests__/labels/`:
-
-1. **ABC Distillery Straight Rye Whisky** - Front/back label with government warning
-2. **12345 Imports Rum with Coconut Liqueur** - Import label test case
-3. **Orpheus Brewing Pineapple Sour Ale** - Beer label with vertical text (tests rotation detection)
+**If given more time, I would add:**
+- Image preprocessing for low-quality photos
+- Exact government warning text validation
+- Field of vision validation (verify fields appear on same side)
+- Batch processing for multiple labels
+- PDF report export
 
 ## Deployment
 
-### Deploy to Vercel
-
-1. **Connect Repository**
+Deployed to Vercel with automatic deployments on push:
+- No environment variables required (self-contained)
+- Tesseract.js WASM files included in bundle via `next.config.ts`
+- Server-side rendering for OCR processing
 
 ```bash
-# Push to GitHub
-git push origin main
+npm run build    # Production build
+npm start        # Start server
 ```
 
-2. **Import to Vercel**
+## Design Decisions
 
-- Go to [vercel.com/new](https://vercel.com/new)
-- Import your repository
-- Click "Deploy"
+**Why server-side OCR?**
+- Smaller client bundle (Tesseract not shipped to browser)
+- Consistent Node.js environment
+- Better performance using server CPU
+- Trade-off: Slight network latency (acceptable for ~2-3 second processing time)
 
-3. **Configure Settings** (if needed)
+**Why multi-rotation processing?**
+- Real-world labels have vertical text (especially government warnings)
+- Standard OCR at 0° misses 90° text entirely
+- Processing all rotations and merging results catches text at any orientation
+- Adds ~1 second to processing time but significantly improves accuracy
 
-- Framework: Next.js
-- Build Command: `pnpm build`
-- Output Directory: `.next`
+**Why USWDS?**
+- Appropriate for government application simulation
+- Accessibility built-in (WCAG 2.1 AA compliant)
+- Professional appearance without design work
 
-4. **Environment Variables** (none required for this project)
+## Documentation
 
-### Deploy to Other Platforms
-
-The app can also be deployed to:
-
-- **Netlify:** Add Next.js plugin
-- **Railway:** Connect GitHub repo
-- **AWS Amplify:** Use Amplify Console
-- **Self-Hosted:** Run `pnpm build` && `pnpm start`
-
-## Assumptions & Limitations
-
-### Assumptions
-
-- Images are reasonably clear and well-lit
-- English text only (Tesseract configured for English)
-- Common image formats (JPEG, PNG, WebP)
-- Desktop/tablet primary use case
-- No database needed (stateless verification)
-- No user authentication required
-
-### Known Limitations
-
-- OCR accuracy depends on image quality (tested with clear, well-lit labels)
-- Does not handle multiple languages (English only)
-- No batch processing (one label at a time)
-- No verification history saved (stateless)
-- Maximum image size: 5 MB
-
-### Future Enhancements (If More Time)
-
-- [ ] Image preprocessing (contrast enhancement, de-skewing)
-- [ ] Support for multiple product types with conditional field validation (Beer, Wine, Spirits)
-- [ ] Exact government warning text validation (currently checks key phrases only)
-- [ ] Field of vision validation (verify Brand, ABV, Type appear on same side)
-- [ ] Batch processing multiple labels
-- [ ] Export results as PDF report
-- [ ] User accounts and verification history
-- [ ] Integration with real TTB databases
-
-## Contributing
-
-This is a take-home project for demonstration purposes. If you'd like to extend it:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## Technical Documentation
-
-Detailed technical documentation is available in the `/docs` directory:
-
-- **[Project Requirements](./docs/project-requirements.md):** Original project specifications and requirements
-- **[Alcohol Type Requirements](./docs/alcohol-type-requirements.md):** TTB labeling requirements by alcohol type
-- **[Project Alignment Analysis](./docs/project-alignment-analysis.md):** Implementation analysis against requirements
-- **[DS Labeling Checklist](./docs/ds-labeling-checklist.pdf):** TTB labeling checklist reference
-
-## License
-
-This project is created for educational and demonstration purposes.
-
-## Acknowledgments
-
-- **TTB:** Alcohol and Tobacco Tax and Trade Bureau for regulatory guidelines
-- **USWDS:** U.S. Web Design System for accessible components
-- **Tesseract.js:** Open-source OCR engine
-- **Next.js:** React framework by Vercel
-- **TrussWorks:** React USWDS component library
-
-## Support
-
-For questions or issues:
-
-- Open an issue on GitHub
-- Check the [technical documentation](./docs)
-- Review the [TTB guidelines](https://www.ttb.gov)
+- `docs/project-requirements.md` - Original project specification
+- `docs/alcohol-type-requirements.md` - TTB labeling requirements by beverage type
+- Inline JSDoc comments on all major functions
+- TypeScript interfaces document data structures
 
 ---
 
-**Built with ❤️ using Next.js, TypeScript, USWDS, and Tesseract.js**
+**Tech Stack:** Next.js 15 • TypeScript 5 • Tesseract.js 6 • USWDS 3.13 • Jest • Vercel

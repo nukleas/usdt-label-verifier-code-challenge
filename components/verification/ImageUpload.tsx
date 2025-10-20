@@ -16,6 +16,7 @@ import { MAX_IMAGE_SIZE, VALID_IMAGE_TYPES } from "../../lib/constants";
 
 export default function ImageUpload({
   onChange,
+  value,
   disabled = false,
   maxSize = MAX_IMAGE_SIZE,
   accept = VALID_IMAGE_TYPES.join(","),
@@ -34,6 +35,26 @@ export default function ImageUpload({
       }
     };
   }, [preview]);
+
+  /**
+   * Clear internal state when external value becomes null
+   */
+  useEffect(() => {
+    if (value === null) {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+      setPreview(null);
+      setError(null);
+      setFileName(null);
+
+      // Reset the file input
+      const input = document.getElementById("label-image") as HTMLInputElement;
+      if (input) {
+        input.value = "";
+      }
+    }
+  }, [value, preview]);
 
   /**
    * Handles file selection

@@ -838,6 +838,12 @@ export function matchNetContents(
     });
   }
 
+  // Fuzzy matching for volume text (handles OCR variations)
+  if (foundVolumes.length === 0) {
+    const fuzzyVolumes = findFuzzyVolumeMatches(expectedParsed, ocrText);
+    foundVolumes.push(...fuzzyVolumes);
+  }
+
   // Extract L volumes
   for (const match of ocrText.matchAll(VOLUME_L_PATTERN)) {
     foundVolumes.push({
@@ -963,7 +969,10 @@ export function matchGovernmentWarning(
       field: "governmentWarning",
       status: "match",
       expected: "GOVERNMENT WARNING",
-      found: "GOVERNMENT WARNING",
+      found:
+        foundPhrases.length > 0
+          ? foundPhrases.join(", ")
+          : "GOVERNMENT WARNING",
       confidence: Math.round(matchRate),
       message: "Required health warning present",
       bboxes: bboxes.length > 0 ? bboxes : undefined,
@@ -973,7 +982,7 @@ export function matchGovernmentWarning(
       field: "governmentWarning",
       status: "mismatch",
       expected: "GOVERNMENT WARNING",
-      found: `Partial warning text detected`,
+      found: foundPhrases.join(", "),
       confidence: Math.round(matchRate),
       message: "Health warning text incomplete or illegible",
       bboxes: bboxes.length > 0 ? bboxes : undefined,
@@ -1105,6 +1114,51 @@ function parseVolume(input: string): { value: number; unit: string } | null {
 function convertToML(value: number, unit: string): number {
   const factor = VOLUME_TO_ML[unit] || VOLUME_TO_ML["mL"];
   return value * factor;
+}
+
+/**
+ * Finds volume matches using improved fuzzy text matching for OCR variations
+ * Handles cases like "12 FLUID OZ" vs "12 fl oz"
+ */
+function findFuzzyVolumeMatches(
+  expectedParsed: { value: number; unit: string },
+  ocrText: string
+): Array<{ value: number; unit: string }> {
+  const results: Array<{ value: number; unit: string }> = [];
+
+  // Regex patterns for volume matching
+  const volumePatterns = [
+    // Ounces variations - more comprehensive
+    {
+      unit: "oz",
+      patterns: [
+        /(\d+(?:\.\d+)?)\s*(?:fluid\s*oz|fl\s*oz|fl\.\s*oz|ounces?|oz)/gi,
+        /(\d+(?:\.\d+)?)\s*(?:fluid|fl)\s*(?:oz|ounce)/gi,
+      ],
+    },
+    // Milliliters variations
+    {
+      unit: "mL",
+      patterns: [/(\d+(?:\.\d+)?)\s*(?:ml|milliliters?|millilitres?)/gi],
+    },
+    // Liters variations
+    { unit: "L", patterns: [/(\d+(?:\.\d+)?)\s*(?:l|liters?|litres?)/gi] },
+  ];
+
+  for (const { unit, patterns } of volumePatterns) {
+    for (const pattern of patterns) {
+      const matches = Array.from(ocrText.matchAll(pattern));
+      for (const match of matches) {
+        const value = parseFloat(match[1]);
+        if (value >= 0.1 && value <= 10000) {
+          // Reasonable volume range
+          results.push({ value, unit });
+        }
+      }
+    }
+  }
+
+  return results;
 }
 
 /**

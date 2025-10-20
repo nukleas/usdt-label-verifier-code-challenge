@@ -113,12 +113,10 @@ export default function LabelCanvas({
 
   // Cleanup image URL when component unmounts or imageFile changes
   useEffect(() => {
-    return () => {
-      if (imageUrl) {
-        URL.revokeObjectURL(imageUrl);
-      }
-    };
-  }, [imageFile]); // Only cleanup when imageFile changes
+    if (imageUrl) {
+      URL.revokeObjectURL(imageUrl);
+    }
+  }, [imageUrl]); // Only cleanup when imageUrl changes
 
   // Get fields that have bboxes
   const fieldsWithBboxes = fieldVerifications.filter(

@@ -131,10 +131,13 @@ export class ServerOCRProcessor {
         rotatedBuffer = await rotatedImage.getBufferAsync(sourceMime);
       }
 
-      // Run Tesseract OCR with blocks output enabled
+      // Run Tesseract OCR with blocks output enabled and character whitelist
       const result = await this.worker.recognize(
         rotatedBuffer,
-        {},
+        {
+          tessedit_char_whitelist:
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:;()%/",
+        } as Record<string, string>,
         { blocks: true }
       );
 
@@ -257,10 +260,13 @@ export class ServerOCRProcessor {
       imageHeight = image.bitmap.height;
     }
 
-    // Run OCR with blocks output enabled
+    // Run OCR with blocks output enabled and character whitelist
     const result = await this.worker.recognize(
       processBuffer,
-      {},
+      {
+        tessedit_char_whitelist:
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:;()%/",
+      } as Record<string, string>,
       { blocks: true }
     );
 
@@ -325,7 +331,7 @@ export class ServerOCRProcessor {
    * Calculates a robust score for orientation selection
    * Uses weighted scoring: wordCount * (avgConfidence/100) + pattern validation bonus/penalty
    */
-  private calculateOrientationScore(attempt: RotationAttempt): number {
+  calculateOrientationScore(attempt: RotationAttempt): number {
     const { wordCount, confidence, text, blocks } = attempt;
 
     // Base weighted score: wordCount * (confidence/100)

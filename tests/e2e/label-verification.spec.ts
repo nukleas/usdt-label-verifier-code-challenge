@@ -249,7 +249,7 @@ test.describe("Label Verification E2E Tests", () => {
     await page.getByLabel("Alcohol Type *").selectOption("cider");
     await expect(page.locator("text=0.5%-8.5% range for cider")).toBeVisible();
     await expect(
-      page.locator("text=Hard Cider, Apple Cider, Pear Cider").first()
+      page.locator("text=Hard Cider, Hard Apple Cider, Pear Cider").first()
     ).toBeVisible();
   });
 

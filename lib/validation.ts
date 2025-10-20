@@ -146,7 +146,7 @@ export function validateAlcoholType(
   }
 
   // Check if the alcohol type is valid
-  const validTypes = ALCOHOL_TYPES.map((type) => type.value);
+  const validTypes = ALCOHOL_TYPES.map((type) => type.value) as readonly string[];
   if (!validTypes.includes(alcoholType)) {
     return {
       field: "alcoholType",
@@ -217,8 +217,8 @@ export function validateAlcoholContent(
   }
 
   // Use alcohol type specific range if available, otherwise use default
-  let minABV = ABV_RANGE.min;
-  let maxABV = ABV_RANGE.max;
+  let minABV: number = ABV_RANGE.min;
+  let maxABV: number = ABV_RANGE.max;
 
   if (alcoholType) {
     const rules =
@@ -271,6 +271,55 @@ export function validateNetContents(
   }
 
   return null;
+}
+
+/**
+ * Validates volume field (simplified version for basic volume validation)
+ *
+ * @param volume - Volume to validate
+ * @returns Validation error if invalid, null if valid
+ */
+export function validateVolume(volume: string): ValidationError | null {
+  if (!volume || volume.trim().length === 0) {
+    return {
+      field: "volume",
+      message: ERROR_MESSAGES.REQUIRED_FIELD,
+      code: "REQUIRED_VOLUME",
+    };
+  }
+
+  // Check for valid format: number + optional space + unit (ml, mL, L, l)
+  const volumeRegex = /^\d+(\.\d+)?\s*(ml|mL|L|l)$/;
+
+  if (!volumeRegex.test(volume)) {
+    return {
+      field: "volume",
+      message: ERROR_MESSAGES.INVALID_VOLUME,
+      code: "INVALID_VOLUME_FORMAT",
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Validates volume field and returns boolean (for testing compatibility)
+ *
+ * @param volume - Volume to validate
+ * @returns True if valid, false if invalid
+ */
+export function validateVolumeBoolean(volume: string): boolean {
+  return validateVolume(volume) === null;
+}
+
+/**
+ * Validates alcohol content and returns boolean (for testing compatibility)
+ *
+ * @param content - Alcohol content to validate
+ * @returns True if valid, false if invalid
+ */
+export function validateAlcoholContentBoolean(content: string): boolean {
+  return validateAlcoholContent(content) === null;
 }
 
 // ============================================================================
@@ -522,4 +571,41 @@ export function formatFieldName(field: string): string {
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (str) => str.toUpperCase())
     .trim();
+}
+
+/**
+ * Formats a confidence score as a percentage string
+ *
+ * @param score - Confidence score between 0 and 1
+ * @returns Formatted percentage string (e.g., "95%")
+ * @throws Error if score is not a number, NaN, Infinity, or outside range [0, 1]
+ *
+ * @example
+ * formatConfidenceScore(0.95)  // Returns: "95%"
+ * formatConfidenceScore(0.876)  // Returns: "88%"
+ * formatConfidenceScore(1)      // Returns: "100%"
+ * formatConfidenceScore(0)      // Returns: "0%"
+ */
+export function formatConfidenceScore(score: number): string {
+  // Validate input type
+  if (typeof score !== "number") {
+    throw new Error("Confidence score must be a number");
+  }
+
+  // Validate for NaN
+  if (isNaN(score)) {
+    throw new Error("Confidence score cannot be NaN");
+  }
+
+  // Validate for Infinity
+  if (!isFinite(score)) {
+    throw new Error("Confidence score cannot be Infinity or -Infinity");
+  }
+
+  // Validate range [0, 1]
+  if (score < 0 || score > 1) {
+    throw new Error("Confidence score must be between 0 and 1");
+  }
+
+  return `${Math.round(score * 100)}%`;
 }
